@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { useAchievements } from "@/contexts/AchievementContext";
-import AchievementBadge from "@/components/atoms/AchievementBadge";
-import BadgeUnlockAnimation from "@/components/molecules/BadgeUnlockAnimation";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useAchievements } from "@/contexts/AchievementContext";
 import ApperIcon from "@/components/ApperIcon";
+import BadgeUnlockAnimation from "@/components/molecules/BadgeUnlockAnimation";
+import AchievementBadge from "@/components/atoms/AchievementBadge";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
 
@@ -690,7 +690,7 @@ useEffect(() => {
                   </div>
                 </div>
               </Card>
-            </div>
+</div>
           </div>
         </div>
 
@@ -700,24 +700,6 @@ useEffect(() => {
           isVisible={showUnlockAnimation}
           onComplete={() => setShowUnlockAnimation(false)}
         />
-      </div>
-    </div>
-{/* Badge Unlock Animation */}
-        <BadgeUnlockAnimation
-          achievement={pendingUnlock}
-          isVisible={showUnlockAnimation}
-          onComplete={() => setShowUnlockAnimation(false)}
-        />
-
-        {/* Settings Save Button */}
-        <div className="flex gap-3">
-          <Button onClick={handleSaveSettings}>
-            <ApperIcon name="Save" size={16} className="mr-2" />Guardar Cambios
-          </Button>
-          <Button variant="secondary">
-            <ApperIcon name="Download" size={16} className="mr-2" />Exportar Datos
-          </Button>
-        </div>
       </div>
     </div>
   );
