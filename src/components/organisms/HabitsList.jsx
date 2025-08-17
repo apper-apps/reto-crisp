@@ -10,7 +10,12 @@ const HabitsList = ({ habits, onToggleHabit, onAddHabit, className }) => {
   
   // Calculate potential points
   const potentialPoints = (totalCount - completedCount) * 10;
-
+  
+  // Calculate streak statistics
+  const activeStreaks = habits.filter(h => (h.currentStreak || 0) > 0).length;
+  const totalCurrentStreak = habits.reduce((sum, h) => sum + (h.currentStreak || 0), 0);
+  const bestStreaks = habits.map(h => h.bestStreak || 0);
+  const longestStreak = Math.max(...bestStreaks, 0);
 // Helper functions
   const groupHabits = () => {
     return habits.reduce((groups, habit) => {
@@ -37,15 +42,29 @@ const HabitsList = ({ habits, onToggleHabit, onAddHabit, className }) => {
   const groupedHabits = groupHabits();
 
   return (
-    <div className={cn("space-y-6", className)}>
+<div className={cn("space-y-6", className)}>
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold font-display text-gray-900">
           Hábitos por Categorías
         </h2>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <ApperIcon name="CheckCircle" size={16} />
-            <span>{completedCount} de {totalCount} completados</span>
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-2 text-gray-600">
+              <ApperIcon name="CheckCircle" size={16} />
+              <span>{completedCount} de {totalCount} completados</span>
+            </div>
+            {activeStreaks > 0 && (
+              <div className="flex items-center gap-2 text-orange-600">
+                <ApperIcon name="Flame" size={16} />
+                <span>{activeStreaks} racha{activeStreaks !== 1 ? 's' : ''} activa{activeStreaks !== 1 ? 's' : ''}</span>
+              </div>
+            )}
+            {longestStreak > 0 && (
+              <div className="flex items-center gap-2 text-amber-600">
+                <ApperIcon name="Trophy" size={16} />
+                <span>Mejor: {longestStreak} días</span>
+              </div>
+            )}
           </div>
           <button
             onClick={onAddHabit}
@@ -114,18 +133,49 @@ const HabitsList = ({ habits, onToggleHabit, onAddHabit, className }) => {
         </div>
       )}
 
-      {totalCount > 0 && (
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-            <span>Progreso de Hoy</span>
-            <span className="font-semibold">{Math.round(completionPercentage)}%</span>
+{totalCount > 0 && (
+        <div className="mt-6 space-y-4">
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+              <span>Progreso de Hoy</span>
+              <span className="font-semibold">{Math.round(completionPercentage)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-gradient-purple-blue h-2 rounded-full transition-all duration-300"
+                style={{ width: `${completionPercentage}%` }}
+              />
+            </div>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-gradient-purple-blue h-2 rounded-full transition-all duration-300"
-              style={{ width: `${completionPercentage}%` }}
-            />
-          </div>
+          
+          {/* Streak Summary */}
+          {(activeStreaks > 0 || longestStreak > 0) && (
+            <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ApperIcon name="Flame" size={20} className="text-orange-500" />
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Rachas Activas</h3>
+                    <p className="text-sm text-gray-600">
+                      {activeStreaks > 0 
+                        ? `${activeStreaks} hábito${activeStreaks !== 1 ? 's' : ''} en racha`
+                        : 'Completa hábitos para iniciar rachas'
+                      }
+                    </p>
+                  </div>
+                </div>
+                {longestStreak > 0 && (
+                  <div className="text-right">
+                    <div className="flex items-center gap-1 text-amber-600">
+                      <ApperIcon name="Trophy" size={16} />
+                      <span className="font-bold">{longestStreak}</span>
+                    </div>
+                    <div className="text-xs text-amber-700">Récord personal</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

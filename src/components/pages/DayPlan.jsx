@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { usePoints } from "@/contexts/PointsContext";
 import ApperIcon from "@/components/ApperIcon";
@@ -145,22 +145,52 @@ const sampleContent = {
 };
 
 function DayPlan({ day, challenge, onBack }) {
-  const { awardPoints } = usePoints();
-const [expandedMoments, setExpandedMoments] = useState({});
+  const { awardPoints, streakCelebration } = usePoints();
+  const [expandedMoments, setExpandedMoments] = useState({});
   const [completedItems, setCompletedItems] = useState(new Set());
   const [surveyResponses, setSurveyResponses] = useState({});
   const [reflectionResponses, setReflectionResponses] = useState({});
-const toggleMoment = (momentId) => {
+
+  // Trigger confetti for streak celebrations
+  useEffect(() => {
+    if (streakCelebration) {
+      // Create confetti effect
+      const createConfetti = () => {
+        const colors = ['#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#8b5cf6'];
+        for (let i = 0; i < 50; i++) {
+          const confetti = document.createElement('div');
+          confetti.style.position = 'fixed';
+          confetti.style.left = Math.random() * window.innerWidth + 'px';
+          confetti.style.top = '-10px';
+          confetti.style.width = '6px';
+          confetti.style.height = '6px';
+          confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.borderRadius = '50%';
+          confetti.style.pointerEvents = 'none';
+          confetti.style.animation = `confetti-fall ${2 + Math.random() * 2}s linear infinite`;
+          confetti.style.zIndex = '10000';
+          document.body.appendChild(confetti);
+          
+          setTimeout(() => {
+            confetti.remove();
+          }, 4000);
+        }
+      };
+      createConfetti();
+    }
+  }, [streakCelebration]);
+
+  const toggleMoment = (momentId) => {
     setExpandedMoments(prev => ({
       ...prev,
       [momentId]: !prev[momentId]
     }));
   };
 
-const getContentIcon = (type) => {
+  const getContentIcon = (type) => {
     switch (type) {
       case 'survey': return 'BarChart3';
-      case 'reflection': return 'Heart';
+case 'reflection': return 'Heart';
       case 'education': return 'BookOpen';
       case 'activity': return 'CheckCircle2';
       default: return 'Circle';

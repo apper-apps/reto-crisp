@@ -27,7 +27,9 @@ async create(habitData) {
       ...habitData,
       goal: habitData.goal || { current: 0, target: 1, unit: "vez" },
       isCompletedToday: false,
-      completionDates: []
+      completionDates: [],
+      currentStreak: 0,
+      bestStreak: 0
     };
     
     this.habits.push(newHabit);
@@ -61,8 +63,65 @@ async update(id, habitData) {
       throw new Error(`Hábito con ID ${id} no encontrado`);
     }
     
-    this.habits.splice(index, 1);
+this.habits.splice(index, 1);
     return true;
+  }
+
+  calculateStreaks(habit) {
+    if (!habit.completionDates || habit.completionDates.length === 0) {
+      return { currentStreak: 0, bestStreak: 0 };
+    }
+
+    const sortedDates = [...habit.completionDates].sort((a, b) => new Date(b) - new Date(a));
+    const today = new Date().toISOString().split('T')[0];
+    
+    let currentStreak = 0;
+    let bestStreak = 0;
+    let tempStreak = 0;
+    
+    // Calculate current streak
+    let checkDate = new Date(today);
+    for (let i = 0; i < sortedDates.length; i++) {
+      const dateStr = checkDate.toISOString().split('T')[0];
+      if (sortedDates.includes(dateStr)) {
+        currentStreak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    
+    // Calculate best streak
+    const allDates = sortedDates.map(d => new Date(d)).sort((a, b) => a - b);
+    for (let i = 0; i < allDates.length; i++) {
+      tempStreak = 1;
+      for (let j = i + 1; j < allDates.length; j++) {
+        const dayDiff = (allDates[j] - allDates[j-1]) / (1000 * 60 * 60 * 24);
+        if (dayDiff === 1) {
+          tempStreak++;
+        } else {
+          break;
+        }
+      }
+      bestStreak = Math.max(bestStreak, tempStreak);
+    }
+    
+    return { currentStreak, bestStreak: Math.max(bestStreak, currentStreak) };
+  }
+
+  async updateStreaks() {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    this.habits.forEach(habit => {
+      const streaks = this.calculateStreaks(habit);
+      habit.currentStreak = streaks.currentStreak;
+      habit.bestStreak = streaks.bestStreak;
+    });
+    return this.habits;
+  }
+
+  getStreakMilestones(streakDays) {
+    const milestones = [3, 7, 14, 21];
+    return milestones.includes(streakDays);
   }
 }
 

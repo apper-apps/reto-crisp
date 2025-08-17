@@ -6,10 +6,23 @@ import ApperIcon from '@/components/ApperIcon';
 
 const HabitItem = ({ habit, onToggle, className }) => {
   const [celebrating, setCelebrating] = useState(false);
+  const [showStreakCelebration, setShowStreakCelebration] = useState(false);
+
+  const currentStreak = habit.currentStreak || 0;
+  const bestStreak = habit.bestStreak || 0;
+  const isStreakActive = currentStreak > 0 && !habit.isCompletedToday;
 
   const handleToggle = () => {
     if (!habit.isCompletedToday) {
       setCelebrating(true);
+      
+      // Check for potential streak milestones
+      const potentialStreak = currentStreak + 1;
+      if ([3, 7, 14, 21].includes(potentialStreak)) {
+        setShowStreakCelebration(true);
+        setTimeout(() => setShowStreakCelebration(false), 2000);
+      }
+      
       setTimeout(() => setCelebrating(false), 800);
     }
     onToggle(habit.Id);
@@ -63,15 +76,49 @@ const HabitItem = ({ habit, onToggle, className }) => {
               {habit.category}
             </span>
           </div>
-          
-          {habit.description && (
+{habit.description && (
             <p className="text-sm text-gray-600 mb-2">{habit.description}</p>
+          )}
+
+          {/* Streak Information */}
+          {(currentStreak > 0 || bestStreak > 0) && (
+            <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-1">
+                <ApperIcon 
+                  name="Flame" 
+                  size={14} 
+                  className={cn(
+                    "transition-colors",
+                    isStreakActive ? "text-orange-500" : "text-gray-400"
+                  )} 
+                />
+                <span className={cn(
+                  "text-xs font-medium",
+                  isStreakActive ? "text-orange-600" : "text-gray-500"
+                )}>
+                  {currentStreak} días
+                </span>
+              </div>
+              {bestStreak > currentStreak && (
+                <div className="flex items-center gap-1">
+                  <ApperIcon name="Trophy" size={12} className="text-amber-500" />
+                  <span className="text-xs text-amber-600 font-medium">
+                    Mejor: {bestStreak}
+                  </span>
+                </div>
+              )}
+              {showStreakCelebration && (
+                <div className="animate-bounce text-xs font-bold text-orange-600">
+                  ¡Nueva racha!
+                </div>
+              )}
+            </div>
           )}
           
           {habit.goal && (
             <div className="flex items-center gap-2">
               <div className="flex-1 bg-gray-200 rounded-full h-2">
-                <div 
+                <div
                   className="h-2 rounded-full transition-all duration-300"
                   style={{ 
                     width: `${Math.min((habit.goal.current / habit.goal.target) * 100, 100)}%`,
