@@ -156,15 +156,13 @@ useEffect(() => {
     }
   }, [pendingUnlock]);
 
-  return (
+return (
     <div className="space-y-6">
-    <div>
-        <h1 className="text-3xl font-bold font-display text-gray-900">Mi Perfil
-                    </h1>
-        <p className="text-gray-600 mt-2">Configura tu experiencia y preferencias del reto.
-                    </p>
-    </div>
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div>
+        <h1 className="text-3xl font-bold font-display text-gray-900">Mi Perfil</h1>
+        <p className="text-gray-600 mt-2">Configura tu experiencia y preferencias del reto.</p>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="p-6">
             <div className="text-center">
                 <div
@@ -689,8 +687,8 @@ useEffect(() => {
                     </div>
                   </div>
                 </div>
-              </Card>
-</div>
+</Card>
+            </div>
           </div>
         </div>
 
