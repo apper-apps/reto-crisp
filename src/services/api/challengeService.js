@@ -1,8 +1,9 @@
 import challengesData from "@/services/mockData/challenges.json";
 
 class ChallengeService {
-  constructor() {
+constructor() {
     this.challenges = [...challengesData];
+    this.miniChallenges = [];
   }
 
   async getAll() {
@@ -61,8 +62,6 @@ class ChallengeService {
     if (index === -1) {
       throw new Error(`Reto con ID ${id} no encontrado`);
     }
-    
-    this.challenges.splice(index, 1);
 this.challenges.splice(index, 1);
     return true;
   }
@@ -119,3 +118,8 @@ this.challenges.splice(index, 1);
     return { ...this.miniChallenges[index] };
   }
 }
+
+// Create and export service instance
+const challengeService = new ChallengeService();
+export { challengeService };
+export default challengeService;
