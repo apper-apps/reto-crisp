@@ -387,9 +387,8 @@ return (
                                         </Button>
                                     </div>
                                 </div>
-                            )}
+)}
                         </>
-</>
                     )}
                 </div>
                 
@@ -404,6 +403,8 @@ return (
                         {isLoading ? 'Guardando...' : 'Guardar Configuración'}
                     </Button>
                 </div>
+            </Card>
+            
             {/* Personal Information Form */}
             <Card className="p-6">
                 <h3
