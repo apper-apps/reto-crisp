@@ -122,7 +122,23 @@ return points;
       day, 
       totalDays 
     });
-    return points;
+return points;
+  }
+
+  awardChallengeCompletion(challengeName = "Reto 21 días", totalPoints = 500) {
+    this.totalPoints += totalPoints;
+    this.savePoints();
+    this.addPointsHistory('challenge_completion', totalPoints, {
+      challenge: challengeName,
+      completionDate: new Date().toISOString(),
+      specialAchievement: true
+    });
+    
+    return {
+      points: totalPoints,
+      message: `¡Felicitaciones! Has completado ${challengeName}`,
+      celebration: 'massive_confetti'
+    };
   }
 }
 

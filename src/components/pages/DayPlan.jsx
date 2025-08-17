@@ -5,6 +5,7 @@ import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
 import { cn } from "@/utils/cn";
+import { assessmentService } from "@/services/api/assessmentService";
 
 const moments = [
   {
@@ -150,8 +151,56 @@ function DayPlan({ day, challenge, onBack }) {
   const [completedItems, setCompletedItems] = useState(new Set());
   const [surveyResponses, setSurveyResponses] = useState({});
   const [reflectionResponses, setReflectionResponses] = useState({});
+  
+  // Day 21 Completion Flow State
+  const [showCompletionFlow, setShowCompletionFlow] = useState(false);
+  const [completionStep, setCompletionStep] = useState(1);
+  const [finalMetrics, setFinalMetrics] = useState({
+    weight: '',
+    measurements: {
+      chest: '',
+      waist: '',
+      hips: '',
+      arms: '',
+      thighs: ''
+    },
+    energyLevel: 5,
+    sleepQuality: 5,
+    overallWellness: 5
+  });
+  const [photos, setPhotos] = useState({
+    front: null,
+    side: null
+  });
+  const [satisfaction, setSatisfaction] = useState({
+    overall: 5,
+    difficulty: 5,
+    support: 5,
+    results: 5
+  });
+  const [testimonial, setTestimonial] = useState('');
+  const [initialAssessment, setInitialAssessment] = useState(null);
+  const [comparisonReport, setComparisonReport] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Trigger confetti for streak celebrations
+  // Check if this is Day 21 and load initial assessment
+  useEffect(() => {
+    if (day === 21) {
+      setShowCompletionFlow(true);
+      loadInitialAssessment();
+    }
+  }, [day]);
+
+  const loadInitialAssessment = async () => {
+    try {
+      const assessment = await assessmentService.getAssessment();
+      setInitialAssessment(assessment);
+    } catch (error) {
+      console.error('Error loading initial assessment:', error);
+      toast.error('Error al cargar la evaluación inicial');
+    }
+  };
+// Trigger confetti for streak celebrations
   useEffect(() => {
     if (streakCelebration) {
       // Create confetti effect
@@ -179,6 +228,617 @@ function DayPlan({ day, challenge, onBack }) {
       createConfetti();
     }
   }, [streakCelebration]);
+
+  // Day 21 Completion Flow Functions
+  const handleMetricsSubmit = async () => {
+    try {
+      setLoading(true);
+      await assessmentService.saveFinalMetrics(finalMetrics);
+      
+      if (initialAssessment) {
+        const report = await assessmentService.generateComparisonReport(initialAssessment, finalMetrics);
+        setComparisonReport(report);
+      }
+      
+      toast.success('Métricas finales guardadas exitosamente');
+      setCompletionStep(2);
+    } catch (error) {
+      toast.error('Error al guardar las métricas finales');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePhotoUpload = (type, event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPhotos(prev => ({
+          ...prev,
+          [type]: e.target.result
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePhotosSubmit = async () => {
+    try {
+      setLoading(true);
+      await assessmentService.savePhotos(photos);
+      toast.success('Fotos guardadas exitosamente');
+      setCompletionStep(3);
+    } catch (error) {
+      toast.error('Error al guardar las fotos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSurveySubmit = async () => {
+    try {
+      setLoading(true);
+      await assessmentService.saveSatisfactionSurvey(satisfaction);
+      toast.success('Encuesta de satisfacción completada');
+      setCompletionStep(4);
+    } catch (error) {
+      toast.error('Error al guardar la encuesta');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFinalSubmit = async () => {
+    try {
+      setLoading(true);
+      
+      if (testimonial.trim()) {
+        await assessmentService.saveTestimonial(testimonial);
+      }
+      
+      // Award final completion points
+      awardPoints(500, '¡Reto de 21 días completado!', {
+        type: 'challenge_completion',
+        day: 21,
+        challenge: challenge?.name || 'Reto 21 días'
+      });
+      
+      // Create massive celebration
+      const createMassiveConfetti = () => {
+        const colors = ['#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316'];
+        for (let i = 0; i < 150; i++) {
+          const confetti = document.createElement('div');
+          confetti.style.position = 'fixed';
+          confetti.style.left = Math.random() * window.innerWidth + 'px';
+          confetti.style.top = '-10px';
+          confetti.style.width = '8px';
+          confetti.style.height = '8px';
+          confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.borderRadius = '50%';
+          confetti.style.pointerEvents = 'none';
+          confetti.style.animation = `confetti-fall ${3 + Math.random() * 3}s linear infinite`;
+          confetti.style.zIndex = '10000';
+          document.body.appendChild(confetti);
+          
+          setTimeout(() => {
+            confetti.remove();
+          }, 6000);
+        }
+      };
+      
+      createMassiveConfetti();
+      toast.success('¡Felicitaciones! Has completado el reto de 21 días');
+      
+      // Show completion summary
+      setCompletionStep(5);
+      
+    } catch (error) {
+      toast.error('Error al finalizar el reto');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderStepIndicator = () => (
+    <div className="flex items-center justify-center mb-8">
+      {[1, 2, 3, 4, 5].map((step) => (
+        <div key={step} className="flex items-center">
+          <div className={cn(
+            "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold",
+            step <= completionStep 
+              ? "bg-primary text-white" 
+              : "bg-gray-200 text-gray-400"
+          )}>
+            {step < completionStep ? (
+              <ApperIcon name="Check" size={16} />
+            ) : (
+              step
+            )}
+          </div>
+          {step < 5 && (
+            <div className={cn(
+              "w-12 h-0.5 mx-2",
+              step < completionStep ? "bg-primary" : "bg-gray-200"
+            )} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderMetricsStep = () => (
+    <Card className="max-w-2xl mx-auto">
+      <div className="p-6">
+        <div className="text-center mb-6">
+          <ApperIcon name="Scale" size={48} className="mx-auto mb-4 text-primary" />
+          <h2 className="text-2xl font-bold text-gray-900">Métricas Finales</h2>
+          <p className="text-gray-600">Ingresa tus medidas finales para comparar tu progreso</p>
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Peso Actual (kg)
+            </label>
+            <input
+              type="number"
+              value={finalMetrics.weight}
+              onChange={(e) => setFinalMetrics(prev => ({ ...prev, weight: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="70"
+            />
+          </div>
+
+          <div>
+            <h3 className="font-medium text-gray-900 mb-3">Medidas Corporales (cm)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Object.entries(finalMetrics.measurements).map(([key, value]) => (
+                <div key={key}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+                    {key === 'chest' ? 'Pecho' : 
+                     key === 'waist' ? 'Cintura' :
+                     key === 'hips' ? 'Caderas' :
+                     key === 'arms' ? 'Brazos' : 'Muslos'}
+                  </label>
+                  <input
+                    type="number"
+                    value={value}
+                    onChange={(e) => setFinalMetrics(prev => ({
+                      ...prev,
+                      measurements: {
+                        ...prev.measurements,
+                        [key]: e.target.value
+                      }
+                    }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { key: 'energyLevel', label: 'Nivel de Energía' },
+              { key: 'sleepQuality', label: 'Calidad del Sueño' },
+              { key: 'overallWellness', label: 'Bienestar General' }
+            ].map(({ key, label }) => (
+              <div key={key}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {label} ({finalMetrics[key]}/10)
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={finalMetrics[key]}
+                  onChange={(e) => setFinalMetrics(prev => ({ ...prev, [key]: parseInt(e.target.value) }))}
+                  className="w-full"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-between mt-8">
+          <Button variant="outline" onClick={() => setShowCompletionFlow(false)}>
+            Volver al Plan
+          </Button>
+          <Button onClick={handleMetricsSubmit} disabled={loading}>
+            {loading ? 'Guardando...' : 'Continuar'}
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+
+  const renderPhotosStep = () => (
+    <Card className="max-w-4xl mx-auto">
+      <div className="p-6">
+        <div className="text-center mb-6">
+          <ApperIcon name="Camera" size={48} className="mx-auto mb-4 text-primary" />
+          <h2 className="text-2xl font-bold text-gray-900">Fotos de Progreso</h2>
+          <p className="text-gray-600">Sube tus fotos finales para crear una comparación antes/después</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Before Photos */}
+          <div>
+            <h3 className="font-medium text-gray-900 mb-4">Fotos Iniciales</h3>
+            <div className="space-y-4">
+              {initialAssessment?.photos ? (
+                <>
+                  {initialAssessment.photos.front && (
+                    <div className="relative">
+                      <img 
+                        src={initialAssessment.photos.front} 
+                        alt="Foto inicial frontal"
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                      <span className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                        Frontal - Día 0
+                      </span>
+                    </div>
+                  )}
+                  {initialAssessment.photos.side && (
+                    <div className="relative">
+                      <img 
+                        src={initialAssessment.photos.side} 
+                        alt="Foto inicial lateral"
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                      <span className="absolute top-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                        Lateral - Día 0
+                      </span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No hay fotos iniciales disponibles
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* After Photos */}
+          <div>
+            <h3 className="font-medium text-gray-900 mb-4">Fotos Finales (Día 21)</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Foto Frontal
+                </label>
+                {photos.front ? (
+                  <div className="relative">
+                    <img 
+                      src={photos.front} 
+                      alt="Foto final frontal"
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                    <button
+                      onClick={() => setPhotos(prev => ({ ...prev, front: null }))}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                    >
+                      <ApperIcon name="X" size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition-colors">
+                    <ApperIcon name="Camera" size={32} className="mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-500 mb-2">Sube tu foto frontal final</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handlePhotoUpload('front', e)}
+                      className="hidden"
+                      id="front-photo"
+                    />
+                    <label htmlFor="front-photo" className="cursor-pointer">
+                      <Button as="span" size="sm">Seleccionar Foto</Button>
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Foto Lateral
+                </label>
+                {photos.side ? (
+                  <div className="relative">
+                    <img 
+                      src={photos.side} 
+                      alt="Foto final lateral"
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                    <button
+                      onClick={() => setPhotos(prev => ({ ...prev, side: null }))}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                    >
+                      <ApperIcon name="X" size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition-colors">
+                    <ApperIcon name="Camera" size={32} className="mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-500 mb-2">Sube tu foto lateral final</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handlePhotoUpload('side', e)}
+                      className="hidden"
+                      id="side-photo"
+                    />
+                    <label htmlFor="side-photo" className="cursor-pointer">
+                      <Button as="span" size="sm">Seleccionar Foto</Button>
+                    </label>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Comparison Report */}
+        {comparisonReport && (
+          <div className="mt-8 p-6 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+              <ApperIcon name="TrendingUp" size={20} className="mr-2 text-primary" />
+              Reporte de Progreso
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {comparisonReport.weightChange !== 0 && (
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">
+                    {comparisonReport.weightChange > 0 ? '+' : ''}{comparisonReport.weightChange} kg
+                  </div>
+                  <div className="text-sm text-gray-600">Cambio de Peso</div>
+                </div>
+              )}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-success">
+                  +{comparisonReport.energyImprovement}
+                </div>
+                <div className="text-sm text-gray-600">Mejora Energía</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-secondary">
+                  +{comparisonReport.sleepImprovement}
+                </div>
+                <div className="text-sm text-gray-600">Mejora Sueño</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-between mt-8">
+          <Button variant="outline" onClick={() => setCompletionStep(1)}>
+            Atrás
+          </Button>
+          <Button onClick={handlePhotosSubmit} disabled={loading}>
+            {loading ? 'Guardando...' : 'Continuar'}
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+
+  const renderSurveyStep = () => (
+    <Card className="max-w-2xl mx-auto">
+      <div className="p-6">
+        <div className="text-center mb-6">
+          <ApperIcon name="Star" size={48} className="mx-auto mb-4 text-primary" />
+          <h2 className="text-2xl font-bold text-gray-900">Encuesta de Satisfacción</h2>
+          <p className="text-gray-600">Ayúdanos a mejorar calificando tu experiencia</p>
+        </div>
+
+        <div className="space-y-6">
+          {[
+            { key: 'overall', label: 'Satisfacción General', icon: 'Heart' },
+            { key: 'difficulty', label: 'Nivel de Dificultad', icon: 'Zap' },
+            { key: 'support', label: 'Apoyo y Recursos', icon: 'Users' },
+            { key: 'results', label: 'Resultados Obtenidos', icon: 'Target' }
+          ].map(({ key, label, icon }) => (
+            <div key={key} className="border rounded-lg p-4">
+              <div className="flex items-center mb-3">
+                <ApperIcon name={icon} size={20} className="mr-2 text-primary" />
+                <label className="font-medium text-gray-900">{label}</label>
+              </div>
+              <div className="flex items-center space-x-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setSatisfaction(prev => ({ ...prev, [key]: star }))}
+                    className={cn(
+                      "p-1 rounded transition-colors",
+                      star <= satisfaction[key] 
+                        ? "text-yellow-500" 
+                        : "text-gray-300 hover:text-yellow-400"
+                    )}
+                  >
+                    <ApperIcon name="Star" size={24} fill={star <= satisfaction[key] ? "currentColor" : "none"} />
+                  </button>
+                ))}
+                <span className="ml-2 text-sm text-gray-600">
+                  ({satisfaction[key]}/5)
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex justify-between mt-8">
+          <Button variant="outline" onClick={() => setCompletionStep(2)}>
+            Atrás
+          </Button>
+          <Button onClick={handleSurveySubmit} disabled={loading}>
+            {loading ? 'Guardando...' : 'Continuar'}
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+
+  const renderTestimonialStep = () => (
+    <Card className="max-w-2xl mx-auto">
+      <div className="p-6">
+        <div className="text-center mb-6">
+          <ApperIcon name="MessageCircle" size={48} className="mx-auto mb-4 text-primary" />
+          <h2 className="text-2xl font-bold text-gray-900">Testimonial (Opcional)</h2>
+          <p className="text-gray-600">Comparte tu experiencia para inspirar a otros</p>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Cuéntanos sobre tu experiencia
+            </label>
+            <textarea
+              value={testimonial}
+              onChange={(e) => setTestimonial(e.target.value)}
+              placeholder="Comparte cómo te has sentido durante estos 21 días, qué has aprendido, y cómo ha impactado tu vida..."
+              rows={6}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+            />
+            <div className="flex justify-between mt-1">
+              <span className="text-sm text-gray-500">
+                {testimonial.length}/500 caracteres
+              </span>
+              {testimonial.length > 500 && (
+                <span className="text-sm text-red-500">
+                  Excede el límite por {testimonial.length - 500} caracteres
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <ApperIcon name="Info" size={20} className="mr-2 text-blue-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm text-blue-800">
+                  Tu testimonial podría ser usado para inspirar a futuros participantes. 
+                  Solo se publicará con tu consentimiento.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-between mt-8">
+          <Button variant="outline" onClick={() => setCompletionStep(3)}>
+            Atrás
+          </Button>
+          <Button 
+            onClick={handleFinalSubmit} 
+            disabled={loading || testimonial.length > 500}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {loading ? 'Finalizando...' : '¡Completar Reto!'}
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+
+  const renderCompletionSummary = () => (
+    <Card className="max-w-2xl mx-auto">
+      <div className="p-8 text-center">
+        <div className="mb-6">
+          <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ApperIcon name="Trophy" size={32} className="text-white" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">¡Felicitaciones!</h2>
+          <p className="text-lg text-gray-600">Has completado exitosamente el reto de 21 días</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4">
+            <div className="text-2xl font-bold text-primary">21</div>
+            <div className="text-sm text-gray-600">Días Completados</div>
+          </div>
+          <div className="bg-gradient-to-r from-green-500/10 to-green-400/5 rounded-lg p-4">
+            <div className="text-2xl font-bold text-green-600">500</div>
+            <div className="text-sm text-gray-600">Puntos Ganados</div>
+          </div>
+          <div className="bg-gradient-to-r from-yellow-500/10 to-yellow-400/5 rounded-lg p-4">
+            <div className="text-2xl font-bold text-yellow-600">
+              {satisfaction.overall}⭐
+            </div>
+            <div className="text-sm text-gray-600">Calificación</div>
+          </div>
+        </div>
+
+        {comparisonReport && (
+          <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+            <h3 className="font-semibold text-gray-900 mb-4">Tu Transformación</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              {comparisonReport.weightChange !== 0 && (
+                <div>Cambio de peso: <strong>{comparisonReport.weightChange > 0 ? '+' : ''}{comparisonReport.weightChange} kg</strong></div>
+              )}
+              <div>Mejora energía: <strong>+{comparisonReport.energyImprovement} puntos</strong></div>
+              <div>Mejora sueño: <strong>+{comparisonReport.sleepImprovement} puntos</strong></div>
+              <div>Bienestar general: <strong>+{comparisonReport.wellnessImprovement} puntos</strong></div>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <Button 
+            onClick={() => {
+              setShowCompletionFlow(false);
+              setCompletionStep(1);
+              onBack();
+            }}
+            className="w-full bg-primary hover:bg-primary/90"
+          >
+            Volver al Calendario
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              // Share functionality could be added here
+              toast.info('Función de compartir próximamente');
+            }}
+            className="w-full"
+          >
+            <ApperIcon name="Share2" size={16} className="mr-2" />
+            Compartir Logro
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+
+  // Show Day 21 completion flow if triggered
+  if (showCompletionFlow) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 py-8">
+        <div className="max-w-6xl mx-auto px-4">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              ¡Día 21 - Final del Reto!
+            </h1>
+            <p className="text-lg text-gray-600">
+              Completa tu evaluación final para ver tu transformación
+            </p>
+          </div>
+
+          {renderStepIndicator()}
+
+          {completionStep === 1 && renderMetricsStep()}
+          {completionStep === 2 && renderPhotosStep()}
+          {completionStep === 3 && renderSurveyStep()}
+          {completionStep === 4 && renderTestimonialStep()}
+          {completionStep === 5 && renderCompletionSummary()}
+        </div>
+      </div>
+    );
+  }
 
   const toggleMoment = (momentId) => {
     setExpandedMoments(prev => ({
@@ -572,7 +1232,7 @@ case 'reflection': return 'Heart';
         ))}
       </div>
 
-      {/* Day Summary */}
+{/* Day Summary */}
       <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
         <div className="p-6">
           <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
@@ -603,6 +1263,29 @@ case 'reflection': return 'Heart';
               );
             })}
           </div>
+
+          {/* Day 21 Special Completion Button */}
+          {day === 21 && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="text-center">
+                <div className="bg-gradient-to-r from-green-100 to-blue-100 rounded-lg p-4 mb-4">
+                  <ApperIcon name="Trophy" size={32} className="mx-auto mb-2 text-primary" />
+                  <h4 className="font-semibold text-gray-900 mb-1">¡Último Día del Reto!</h4>
+                  <p className="text-sm text-gray-600">
+                    Completa tu evaluación final y descubre tu transformación
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => setShowCompletionFlow(true)}
+                  className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold px-8 py-3"
+                  size="lg"
+                >
+                  <ApperIcon name="Star" size={20} className="mr-2" />
+                  Completar Reto de 21 Días
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </Card>
     </div>

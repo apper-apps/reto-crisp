@@ -123,6 +123,23 @@ this.challenges.splice(index, 1);
     return { ...this.miniChallenges[index] };
 }
 
+  async markChallengeComplete(id) {
+    await new Promise(resolve => setTimeout(resolve, 400));
+    const index = this.challenges.findIndex(c => c.Id === id);
+    if (index === -1) {
+      throw new Error(`Reto con ID ${id} no encontrado`);
+    }
+    
+    this.challenges[index] = {
+      ...this.challenges[index],
+      isCompleted: true,
+      completedAt: new Date().toISOString(),
+      finalDay: 21
+    };
+    
+    return { ...this.challenges[index] };
+  }
+
   async getProgressTrends() {
     await new Promise(resolve => setTimeout(resolve, 250));
     
