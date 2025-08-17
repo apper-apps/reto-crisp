@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import ApperIcon from '@/components/ApperIcon';
-import Button from '@/components/atoms/Button';
-import Card from '@/components/atoms/Card';
-import Loading from '@/components/ui/Loading';
-import Error from '@/components/ui/Error';
-import { cn } from '@/utils/cn';
-import { assessmentService } from '@/services/api/assessmentService';
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { assessmentService } from "@/services/api/assessmentService";
+import ApperIcon from "@/components/ApperIcon";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
+import { cn } from "@/utils/cn";
 
 export default function Day0Assessment() {
   const [assessment, setAssessment] = useState(null);
@@ -14,13 +14,11 @@ export default function Day0Assessment() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [currentSection, setCurrentSection] = useState(0);
+  const [validationErrors, setValidationErrors] = useState({});
 
   const sections = [
-    { id: 'personal', title: 'Información Personal', icon: 'User' },
-    { id: 'measurements', title: 'Medidas Corporales', icon: 'Ruler' },
-    { id: 'energy', title: 'Niveles de Energía', icon: 'Zap' },
-    { id: 'photos', title: 'Fotos de Referencia', icon: 'Camera' },
-    { id: 'goals', title: 'Objetivos', icon: 'Target' }
+    { id: 'personal', title: 'Datos personales', icon: 'User' },
+    { id: 'measurements', title: 'Medidas corporales', icon: 'Ruler' }
   ];
 
   useEffect(() => {
@@ -41,7 +39,7 @@ export default function Day0Assessment() {
     }
   };
 
-  const handleInputChange = (section, field, value) => {
+const handleInputChange = (section, field, value) => {
     setAssessment(prev => ({
       ...prev,
       [section]: {
@@ -49,98 +47,171 @@ export default function Day0Assessment() {
         [field]: value
       }
     }));
+    
+    // Clear validation error when user starts typing
+    if (validationErrors[`${section}.${field}`]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [`${section}.${field}`]: null
+      }));
+    }
   };
 
-  const handleSave = async () => {
+  const calculateAge = (birthDate) => {
+    if (!birthDate) return '';
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const calculateBMI = (peso, estatura) => {
+    if (!peso || !estatura) return '';
+    const pesoNum = parseFloat(peso);
+    const estaturaM = parseFloat(estatura) / 100; // Convert cm to meters
+    if (pesoNum > 0 && estaturaM > 0) {
+      return (pesoNum / (estaturaM * estaturaM)).toFixed(1);
+    }
+    return '';
+  };
+
+  const validateFields = () => {
+    const errors = {};
+    
+    // Personal data validations
+    if (!assessment?.personalData?.fechaNacimiento) {
+      errors['personalData.fechaNacimiento'] = 'La fecha de nacimiento es requerida';
+    }
+    if (!assessment?.personalData?.sexo) {
+      errors['personalData.sexo'] = 'Selecciona tu sexo';
+    }
+
+    // Body measurements validations
+    const peso = parseFloat(assessment?.measurements?.peso_kg);
+    if (!peso || peso < 30.0 || peso > 300.0) {
+      errors['measurements.peso_kg'] = 'Introduce un valor válido entre 30.0 y 300.0 kg';
+    }
+
+    const estatura = parseInt(assessment?.measurements?.estatura_cm);
+    if (!estatura || estatura < 120 || estatura > 220) {
+      errors['measurements.estatura_cm'] = 'Introduce un valor válido entre 120 y 220 cm';
+    }
+
+    const cintura = parseInt(assessment?.measurements?.cintura_cm);
+    if (!cintura || cintura < 40 || cintura > 200) {
+      errors['measurements.cintura_cm'] = 'Introduce un valor válido entre 40 y 200 cm';
+    }
+
+    const cadera = parseInt(assessment?.measurements?.cadera_cm);
+    if (!cadera || cadera < 40 || cadera > 200) {
+      errors['measurements.cadera_cm'] = 'Introduce un valor válido entre 40 y 200 cm';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+const handleSave = async () => {
+    if (!validateFields()) {
+      toast.error('Revisa los campos en rojo y vuelve a intentar');
+      return;
+    }
+
     try {
       setSaving(true);
       
       let updatedAssessment;
-      if (assessment.Id && assessment.createdAt !== assessment.updatedAt) {
+      if (assessment.Id && assessment.created_at !== assessment.updated_at) {
         updatedAssessment = await assessmentService.updateAssessment(assessment);
       } else {
         updatedAssessment = await assessmentService.createAssessment(assessment);
       }
       
       setAssessment(updatedAssessment);
-      toast.success('Evaluación guardada exitosamente');
+      toast.success('Datos guardados exitosamente');
     } catch (err) {
-      toast.error('Error al guardar la evaluación');
+      toast.error('Error al guardar los datos');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleComplete = async () => {
+const handleSaveAndContinue = async () => {
+    if (!validateFields()) {
+      toast.error('Revisa los campos en rojo y vuelve a intentar');
+      return;
+    }
+
     try {
       setSaving(true);
       
-      // First save current data
-      await handleSave();
-      
-      // Then mark as completed
-      const completedAssessment = await assessmentService.completeAssessment();
+      // Save and mark as completed
+      const completedAssessment = await assessmentService.completeAssessment(assessment);
       setAssessment(completedAssessment);
       
       toast.success('¡Evaluación inicial completada! Ya puedes comenzar tu reto de 21 días.');
     } catch (err) {
-      toast.error('Error al completar la evaluación');
+      toast.error('Error al completar la evaluación inicial');
     } finally {
       setSaving(false);
     }
   };
 
-  const handlePhotoUpload = (photoType, event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        handleInputChange('photos', photoType, e.target.result);
-        toast.success('Foto cargada exitosamente');
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const calculateProgress = () => {
+const calculateProgress = () => {
     if (!assessment) return 0;
     
     let completed = 0;
-    let total = 0;
+    let total = 6; // Total required fields
     
-    // Personal info (3 fields)
-    const personalFields = ['age', 'height', 'targetWeight'];
-    personalFields.forEach(field => {
-      total++;
-      if (assessment.personalInfo[field]) completed++;
-    });
+    // Personal data (2 required fields)
+    if (assessment.personalData?.fechaNacimiento) completed++;
+    if (assessment.personalData?.sexo) completed++;
     
-    // Measurements (6 fields)
-    const measurementFields = ['currentWeight', 'chest', 'waist', 'hips', 'arms', 'thighs'];
-    measurementFields.forEach(field => {
-      total++;
-      if (assessment.physicalMeasurements[field]) completed++;
-    });
-    
-    // Energy levels (4 fields - always have default values)
-    total += 4;
-    completed += 4;
-    
-    // Photos (3 photos)
-    const photoFields = ['front', 'side', 'back'];
-    photoFields.forEach(field => {
-      total++;
-      if (assessment.photos[field]) completed++;
-    });
-    
-    // Goals (2 fields)
-    const goalFields = ['primary', 'secondary'];
-    goalFields.forEach(field => {
-      total++;
-      if (assessment.goals[field]) completed++;
-    });
+    // Measurements (4 required fields)
+    if (assessment.measurements?.peso_kg && 
+        parseFloat(assessment.measurements.peso_kg) >= 30.0 && 
+        parseFloat(assessment.measurements.peso_kg) <= 300.0) completed++;
+    if (assessment.measurements?.estatura_cm && 
+        parseInt(assessment.measurements.estatura_cm) >= 120 && 
+        parseInt(assessment.measurements.estatura_cm) <= 220) completed++;
+    if (assessment.measurements?.cintura_cm && 
+        parseInt(assessment.measurements.cintura_cm) >= 40 && 
+        parseInt(assessment.measurements.cintura_cm) <= 200) completed++;
+    if (assessment.measurements?.cadera_cm && 
+        parseInt(assessment.measurements.cadera_cm) >= 40 && 
+        parseInt(assessment.measurements.cadera_cm) <= 200) completed++;
     
     return Math.round((completed / total) * 100);
+  };
+
+  const getStatusChip = () => {
+    const progress = calculateProgress();
+    if (assessment?.completed) {
+      return (
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-success text-white text-sm rounded-full">
+          <ApperIcon name="CheckCircle" size={16} />
+          Completado
+        </div>
+      );
+    } else if (progress > 0) {
+      return (
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-warning text-white text-sm rounded-full">
+          <ApperIcon name="Clock" size={16} />
+          Incompleto ({progress}%)
+        </div>
+      );
+    } else {
+      return (
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-400 text-white text-sm rounded-full">
+          <ApperIcon name="Circle" size={16} />
+          Pendiente
+        </div>
+      );
+    }
   };
 
   if (loading) {
@@ -151,7 +222,7 @@ export default function Day0Assessment() {
     return <Error message={error} onRetry={loadAssessment} />;
   }
 
-  if (assessment?.completed) {
+if (assessment?.completed) {
     return (
       <div className="max-w-4xl mx-auto">
         <Card className="p-8 text-center">
@@ -161,13 +232,14 @@ export default function Day0Assessment() {
             </div>
           </div>
           <h1 className="text-3xl font-display font-bold text-gray-900 mb-4">
-            ¡Evaluación Inicial Completada!
+            ¡Evaluación inicial completada!
           </h1>
           <p className="text-lg text-gray-600 mb-6">
-            Ya has completado tu evaluación inicial del Día 0. Todos tus datos de referencia han sido guardados para comparar tu progreso.
+            Ya has completado tu evaluación inicial del Día 0. Todos tus datos de referencia han sido guardados para medir tu transformación durante el reto de 21 días.
           </p>
           <div className="text-sm text-gray-500">
-            Completada el {new Date(assessment.completedAt).toLocaleDateString('es-ES', {
+            Completada el {new Date(assessment.completed_at).toLocaleDateString('es-MX', {
+              timeZone: 'America/Mexico_City',
               year: 'numeric',
               month: 'long',
               day: 'numeric',
@@ -180,18 +252,23 @@ export default function Day0Assessment() {
     );
   }
 
-  const progress = calculateProgress();
+const progress = calculateProgress();
 
-  return (
+return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-display font-bold text-gray-900 mb-2">
-          Día 0 - Evaluación Inicial
-        </h1>
-        <p className="text-lg text-gray-600 mb-6">
-          Completa tu evaluación inicial para establecer tu punto de partida
-        </p>
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-display font-bold text-gray-900 mb-2">
+              Día 0 – ¡Establece tu punto de partida!
+            </h1>
+            <p className="text-lg text-gray-600">
+              Estos datos nos ayudarán a medir tu transformación.
+            </p>
+          </div>
+          {getStatusChip()}
+        </div>
         
         {/* Progress Bar */}
         <div className="bg-gray-200 rounded-full h-3 mb-4">
@@ -204,346 +281,254 @@ export default function Day0Assessment() {
       </div>
 
       {/* Section Navigation */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-8">
+      <div className="grid grid-cols-2 gap-4 mb-8">
         {sections.map((section, index) => (
           <button
             key={section.id}
             onClick={() => setCurrentSection(index)}
             className={cn(
-              "p-3 rounded-lg text-sm font-medium transition-all duration-200 flex flex-col items-center gap-2",
+              "p-4 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-3",
               currentSection === index
-                ? "bg-primary text-white shadow-lg"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                ? "bg-gradient-purple-blue text-white shadow-lg transform scale-[1.02]"
+                : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
             )}
           >
-            <ApperIcon name={section.icon} size={20} />
-            <span className="hidden md:block">{section.title}</span>
+            <ApperIcon name={section.icon} size={24} />
+            <span className="font-semibold">{section.title}</span>
           </button>
         ))}
       </div>
 
       {/* Section Content */}
-      <Card className="p-6 mb-8">
+<Card className="p-6 mb-8">
         {currentSection === 0 && (
           <div className="space-y-6">
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <ApperIcon name="User" size={24} />
-              Información Personal
+              Datos personales mínimos
             </h2>
             
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Edad (años)
+                  Fecha de nacimiento <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="number"
-                  min="18"
-                  max="100"
-                  value={assessment?.personalInfo?.age || ''}
-                  onChange={(e) => handleInputChange('personalInfo', 'age', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ej: 25"
+                  type="date"
+                  value={assessment?.personalData?.fechaNacimiento || ''}
+                  onChange={(e) => handleInputChange('personalData', 'fechaNacimiento', e.target.value)}
+                  className={cn(
+                    "w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent",
+                    validationErrors['personalData.fechaNacimiento'] 
+                      ? "border-red-500" 
+                      : "border-gray-300"
+                  )}
                 />
+                {validationErrors['personalData.fechaNacimiento'] && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors['personalData.fechaNacimiento']}
+                  </p>
+                )}
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Altura (cm)
+                  Edad real (calculada automáticamente)
                 </label>
                 <input
-                  type="number"
-                  min="120"
-                  max="220"
-                  value={assessment?.personalInfo?.height || ''}
-                  onChange={(e) => handleInputChange('personalInfo', 'height', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ej: 170"
+                  type="text"
+                  value={calculateAge(assessment?.personalData?.fechaNacimiento) ? 
+                    `${calculateAge(assessment?.personalData?.fechaNacimiento)} años` : ''}
+                  readOnly
+                  className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                  placeholder="Se calcula automáticamente"
                 />
               </div>
               
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Peso objetivo (kg)
+                  Sexo <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="number"
-                  min="40"
-                  max="200"
-                  step="0.1"
-                  value={assessment?.personalInfo?.targetWeight || ''}
-                  onChange={(e) => handleInputChange('personalInfo', 'targetWeight', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ej: 65.5"
-                />
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { value: 'femenino', label: 'Femenino' },
+                    { value: 'masculino', label: 'Masculino' },
+                    { value: 'prefiero_no_decir', label: 'Prefiero no decir' }
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => handleInputChange('personalData', 'sexo', option.value)}
+                      className={cn(
+                        "p-3 rounded-lg border text-sm font-medium transition-all duration-200",
+                        assessment?.personalData?.sexo === option.value
+                          ? "border-primary bg-primary text-white"
+                          : "border-gray-300 text-gray-700 hover:border-primary hover:bg-primary hover:bg-opacity-10"
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                {validationErrors['personalData.sexo'] && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors['personalData.sexo']}
+                  </p>
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {currentSection === 1 && (
+{currentSection === 1 && (
           <div className="space-y-6">
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <ApperIcon name="Ruler" size={24} />
-              Medidas Corporales
+              Medidas corporales
             </h2>
             
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Peso actual (kg)
+                  Peso (kg) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  min="30.0"
+                  max="300.0"
+                  step="0.1"
+                  value={assessment?.measurements?.peso_kg || ''}
+                  onChange={(e) => handleInputChange('measurements', 'peso_kg', e.target.value)}
+                  className={cn(
+                    "w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent",
+                    validationErrors['measurements.peso_kg'] 
+                      ? "border-red-500" 
+                      : "border-gray-300"
+                  )}
+                  placeholder="Ej: 70.5"
+                />
+                {validationErrors['measurements.peso_kg'] && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors['measurements.peso_kg']}
+                  </p>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Estatura (cm) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  min="120"
+                  max="220"
+                  value={assessment?.measurements?.estatura_cm || ''}
+                  onChange={(e) => handleInputChange('measurements', 'estatura_cm', e.target.value)}
+                  className={cn(
+                    "w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent",
+                    validationErrors['measurements.estatura_cm'] 
+                      ? "border-red-500" 
+                      : "border-gray-300"
+                  )}
+                  placeholder="Ej: 170"
+                />
+                {validationErrors['measurements.estatura_cm'] && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors['measurements.estatura_cm']}
+                  </p>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cintura (cm) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
                   min="40"
                   max="200"
-                  step="0.1"
-                  value={assessment?.physicalMeasurements?.currentWeight || ''}
-                  onChange={(e) => handleInputChange('physicalMeasurements', 'currentWeight', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ej: 70.5"
+                  value={assessment?.measurements?.cintura_cm || ''}
+                  onChange={(e) => handleInputChange('measurements', 'cintura_cm', e.target.value)}
+                  className={cn(
+                    "w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent",
+                    validationErrors['measurements.cintura_cm'] 
+                      ? "border-red-500" 
+                      : "border-gray-300"
+                  )}
+                  placeholder="Ej: 85"
                 />
+                {validationErrors['measurements.cintura_cm'] && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors['measurements.cintura_cm']}
+                  </p>
+                )}
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pecho (cm)
-                </label>
-                <input
-                  type="number"
-                  min="60"
-                  max="150"
-                  step="0.1"
-                  value={assessment?.physicalMeasurements?.chest || ''}
-                  onChange={(e) => handleInputChange('physicalMeasurements', 'chest', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ej: 85.0"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cintura (cm)
-                </label>
-                <input
-                  type="number"
-                  min="50"
-                  max="130"
-                  step="0.1"
-                  value={assessment?.physicalMeasurements?.waist || ''}
-                  onChange={(e) => handleInputChange('physicalMeasurements', 'waist', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ej: 75.5"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Caderas (cm)
-                </label>
-                <input
-                  type="number"
-                  min="60"
-                  max="140"
-                  step="0.1"
-                  value={assessment?.physicalMeasurements?.hips || ''}
-                  onChange={(e) => handleInputChange('physicalMeasurements', 'hips', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ej: 90.0"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Brazos (cm)
-                </label>
-                <input
-                  type="number"
-                  min="20"
-                  max="50"
-                  step="0.1"
-                  value={assessment?.physicalMeasurements?.arms || ''}
-                  onChange={(e) => handleInputChange('physicalMeasurements', 'arms', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ej: 28.5"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Muslos (cm)
+                  Cadera (cm) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
                   min="40"
-                  max="80"
-                  step="0.1"
-                  value={assessment?.physicalMeasurements?.thighs || ''}
-                  onChange={(e) => handleInputChange('physicalMeasurements', 'thighs', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ej: 55.0"
+                  max="200"
+                  value={assessment?.measurements?.cadera_cm || ''}
+                  onChange={(e) => handleInputChange('measurements', 'cadera_cm', e.target.value)}
+                  className={cn(
+                    "w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent",
+                    validationErrors['measurements.cadera_cm'] 
+                      ? "border-red-500" 
+                      : "border-gray-300"
+                  )}
+                  placeholder="Ej: 95"
                 />
+                {validationErrors['measurements.cadera_cm'] && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors['measurements.cadera_cm']}
+                  </p>
+                )}
               </div>
-            </div>
-          </div>
-        )}
-
-        {currentSection === 2 && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <ApperIcon name="Zap" size={24} />
-              Niveles de Energía y Bienestar
-            </h2>
-            
-            <div className="space-y-6">
-              {[
-                { key: 'overallEnergy', label: 'Nivel de energía general', icon: 'Battery' },
-                { key: 'sleepQuality', label: 'Calidad del sueño', icon: 'Moon' },
-                { key: 'stressLevel', label: 'Nivel de estrés', icon: 'Brain' },
-                { key: 'motivation', label: 'Nivel de motivación', icon: 'Heart' }
-              ].map(({ key, label, icon }) => (
-                <div key={key}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <ApperIcon name={icon} size={20} />
-                    <label className="text-sm font-medium text-gray-700">
-                      {label}
-                    </label>
-                    <span className="ml-auto text-lg font-semibold text-primary">
-                      {assessment?.energyLevels?.[key] || 5}/10
-                    </span>
-                  </div>
+              
+              {/* BMI Calculation Display */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  IMC (calculado automáticamente)
+                </label>
+                <div className="flex items-center gap-4">
                   <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={assessment?.energyLevels?.[key] || 5}
-                    onChange={(e) => handleInputChange('energyLevels', key, parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-primary"
+                    type="text"
+                    value={calculateBMI(assessment?.measurements?.peso_kg, assessment?.measurements?.estatura_cm) ? 
+                      `${calculateBMI(assessment?.measurements?.peso_kg, assessment?.measurements?.estatura_cm)} kg/m²` : ''}
+                    readOnly
+                    className="flex-1 p-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                    placeholder="Se calcula automáticamente"
                   />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>Muy bajo</span>
-                    <span>Excelente</span>
+                  <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
+                    <p className="font-medium mb-1">Información:</p>
+                    <p>El IMC es solo un indicador. No constituye un diagnóstico médico.</p>
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         )}
+</Card>
 
-        {currentSection === 3 && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <ApperIcon name="Camera" size={24} />
-              Fotos de Referencia
-            </h2>
-            
-            <p className="text-gray-600">
-              Sube fotos de referencia para hacer seguimiento visual de tu progreso. Recomendamos usar ropa ajustada y buena iluminación.
-            </p>
-            
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                { key: 'front', label: 'Vista frontal', icon: 'User' },
-                { key: 'side', label: 'Vista lateral', icon: 'RotateCcw' },
-                { key: 'back', label: 'Vista trasera', icon: 'UserCheck' }
-              ].map(({ key, label, icon }) => (
-                <div key={key} className="text-center">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-primary transition-colors">
-                    {assessment?.photos?.[key] ? (
-                      <div className="relative">
-                        <img
-                          src={assessment.photos[key]}
-                          alt={label}
-                          className="w-full h-40 object-cover rounded-lg"
-                        />
-                        <button
-                          onClick={() => handleInputChange('photos', key, null)}
-                          className="absolute -top-2 -right-2 bg-error text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
-                        >
-                          <ApperIcon name="X" size={12} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="text-center">
-                        <ApperIcon name={icon} size={32} className="mx-auto text-gray-400 mb-3" />
-                        <p className="text-sm text-gray-600 mb-3">{label}</p>
-                        <label className="cursor-pointer">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handlePhotoUpload(key, e)}
-                            className="hidden"
-                          />
-                          <span className="inline-flex items-center gap-2 px-3 py-2 bg-primary text-white rounded-lg hover:bg-purple-700 text-sm">
-                            <ApperIcon name="Upload" size={16} />
-                            Subir foto
-                          </span>
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+      {/* Warning about data accuracy */}
+      <Card className="p-4 mb-8 bg-blue-50 border-blue-200">
+        <div className="flex items-start gap-3">
+          <ApperIcon name="Info" size={20} className="text-blue-600 mt-0.5" />
+          <div className="text-sm text-blue-800">
+            <p className="font-medium mb-1">Información importante:</p>
+            <p>Asegúrate de introducir tus medidas con precisión. Estos datos serán tu punto de referencia para medir tu progreso durante el reto de 21 días.</p>
           </div>
-        )}
-
-        {currentSection === 4 && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <ApperIcon name="Target" size={24} />
-              Objetivos del Reto
-            </h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Objetivo principal
-                </label>
-                <textarea
-                  rows="3"
-                  value={assessment?.goals?.primary || ''}
-                  onChange={(e) => handleInputChange('goals', 'primary', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ej: Perder 5kg y sentirme más en forma y saludable"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Objetivo secundario
-                </label>
-                <textarea
-                  rows="3"
-                  value={assessment?.goals?.secondary || ''}
-                  onChange={(e) => handleInputChange('goals', 'secondary', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ej: Mejorar mi energía diaria y calidad del sueño"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Duración del reto
-                </label>
-                <select
-                  value={assessment?.goals?.timeline || '21'}
-                  onChange={(e) => handleInputChange('goals', 'timeline', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                >
-                  <option value="21">21 días</option>
-                  <option value="30">30 días</option>
-                  <option value="60">60 días</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
       </Card>
 
       {/* Action Buttons */}
+{/* Action Buttons */}
       <div className="flex justify-between items-center">
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           {currentSection > 0 && (
             <Button
               variant="outline"
@@ -566,7 +551,7 @@ export default function Day0Assessment() {
           )}
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Button
             variant="outline"
             onClick={handleSave}
@@ -581,18 +566,18 @@ export default function Day0Assessment() {
             Guardar
           </Button>
           
-          {progress >= 80 && (
+          {progress === 100 && (
             <Button
-              onClick={handleComplete}
+              onClick={handleSaveAndContinue}
               disabled={saving}
-              className="flex items-center gap-2 bg-success hover:bg-green-600"
+              className="flex items-center gap-2 bg-gradient-purple-blue hover:opacity-90 text-white px-6"
             >
               {saving ? (
                 <ApperIcon name="Loader2" size={16} className="animate-spin" />
               ) : (
                 <ApperIcon name="CheckCircle" size={16} />
               )}
-              Completar evaluación
+              Guardar y continuar
             </Button>
           )}
         </div>

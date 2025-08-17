@@ -16,61 +16,58 @@ async getAssessment() {
       return { ...this.assessmentData };
     }
 
-    // Default assessment structure
+// Default assessment structure for HealthMetrics
     return {
       Id: 1,
       completed: false,
-      completedAt: null,
-      personalInfo: {
-        age: '',
-        height: '',
-        targetWeight: ''
+      completed_at: null,
+      user_id: 1, // Would be dynamic in real app
+      cohort_id: 1, // Would be dynamic in real app
+      phase: 'inicio',
+      personalData: {
+        fechaNacimiento: '',
+        sexo: ''
       },
-      physicalMeasurements: {
-        currentWeight: '',
-        chest: '',
-        waist: '',
-        hips: '',
-        arms: '',
-        thighs: ''
+      measurements: {
+        peso_kg: '',
+        estatura_cm: '',
+        cintura_cm: '',
+        cadera_cm: '',
+        imc: '' // calculated field
       },
-      energyLevels: {
-        overallEnergy: 5,
-        sleepQuality: 5,
-        stressLevel: 5,
-        motivation: 5
-      },
-      photos: {
-        front: null,
-        side: null,
-        back: null
-      },
-      goals: {
-        primary: '',
-        secondary: '',
-        timeline: '21'
-      },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
   }
 
 async createAssessment(assessmentData) {
     await new Promise(resolve => setTimeout(resolve, 400));
     
+    // Calculate BMI if peso_kg and estatura_cm are provided
+    let imc = '';
+    if (assessmentData.measurements?.peso_kg && assessmentData.measurements?.estatura_cm) {
+      const peso = parseFloat(assessmentData.measurements.peso_kg);
+      const estaturaM = parseFloat(assessmentData.measurements.estatura_cm) / 100;
+      if (peso > 0 && estaturaM > 0) {
+        imc = (peso / (estaturaM * estaturaM)).toFixed(1);
+      }
+    }
+    
     const newAssessment = {
       Id: 1,
       ...assessmentData,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      measurements: {
+        ...assessmentData.measurements,
+        imc: imc
+      },
+      phase: 'inicio',
+      user_id: 1,
+      cohort_id: 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     
     this.assessmentData = newAssessment;
-    
-    // Store initial photos if provided
-    if (assessmentData.photos) {
-      this.photos.initial = { ...assessmentData.photos };
-    }
     
     return { ...newAssessment };
   }
@@ -82,10 +79,21 @@ async updateAssessment(assessmentData) {
       throw new Error('No hay evaluación inicial para actualizar');
     }
     
+    // Calculate BMI if peso_kg and estatura_cm are provided
+    let updatedMeasurements = { ...assessmentData.measurements };
+    if (assessmentData.measurements?.peso_kg && assessmentData.measurements?.estatura_cm) {
+      const peso = parseFloat(assessmentData.measurements.peso_kg);
+      const estaturaM = parseFloat(assessmentData.measurements.estatura_cm) / 100;
+      if (peso > 0 && estaturaM > 0) {
+        updatedMeasurements.imc = (peso / (estaturaM * estaturaM)).toFixed(1);
+      }
+    }
+    
     this.assessmentData = {
       ...this.assessmentData,
       ...assessmentData,
-      updatedAt: new Date().toISOString()
+      measurements: updatedMeasurements,
+      updated_at: new Date().toISOString()
     };
     
     return { ...this.assessmentData };
@@ -184,18 +192,24 @@ async updateAssessment(assessmentData) {
     return { ...this.testimonial };
   }
 
-async completeAssessment() {
+async completeAssessment(assessmentData) {
     await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // First update with latest data if provided
+    if (assessmentData) {
+      await this.updateAssessment(assessmentData);
+    }
     
     if (!this.assessmentData) {
       throw new Error('No hay evaluación inicial para completar');
     }
     
+    // Mark as completed
     this.assessmentData = {
       ...this.assessmentData,
       completed: true,
-      completedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      completed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     
     return { ...this.assessmentData };
