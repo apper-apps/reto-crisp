@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import { cn } from "@/utils/cn";
-import ApperIcon from "@/components/ApperIcon";
-
+import React, { useState } from 'react';
+import { cn } from '@/utils/cn';
+import ApperIcon from '@/components/ApperIcon';
+import { usePoints } from '@/contexts/PointsContext';
 const Header = ({ onMenuToggle, className }) => {
+  const { totalPoints, celebrating } = usePoints();
   return (
     <header className={cn("bg-gradient-purple-blue text-white shadow-lg", className)}>
       <div className="flex items-center justify-between px-4 py-4 lg:px-6">
@@ -19,7 +20,7 @@ const Header = ({ onMenuToggle, className }) => {
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
+<div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-2 bg-white/10 px-3 py-2 rounded-lg">
             <ApperIcon name="Calendar" size={16} />
             <span className="text-sm font-medium">
@@ -29,6 +30,17 @@ const Header = ({ onMenuToggle, className }) => {
               })}
             </span>
           </div>
+          
+          <div className={cn(
+            "flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 px-3 py-2 rounded-lg text-yellow-900 shadow-md",
+            celebrating && "animate-pulse scale-105"
+          )}>
+            <ApperIcon name="Trophy" size={16} className={celebrating ? "animate-bounce" : ""} />
+            <span className="text-sm font-bold">
+              {totalPoints.toLocaleString()} pts
+            </span>
+          </div>
+
           <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
             <ApperIcon name="Bell" size={20} />
           </button>

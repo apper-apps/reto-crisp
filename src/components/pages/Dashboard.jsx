@@ -1,21 +1,24 @@
 import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { challengeService } from "@/services/api/challengeService";
 import { habitService } from "@/services/api/habitService";
 import { dayProgressService } from "@/services/api/dayProgressService";
 import ApperIcon from "@/components/ApperIcon";
+import { usePoints } from "@/contexts/PointsContext";
 import Error from "@/components/ui/Error";
 import Loading from "@/components/ui/Loading";
 import StatsCard from "@/components/molecules/StatsCard";
 import ChallengeProgress from "@/components/organisms/ChallengeProgress";
 
 const Dashboard = () => {
+  const { awardPoints } = usePoints();
   const [challenge, setChallenge] = useState(null);
   const [dayProgress, setDayProgress] = useState(null);
   const [habits, setHabits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadDashboardData = async () => {
+const loadDashboardData = async () => {
     try {
       setLoading(true);
       setError("");
@@ -29,6 +32,23 @@ const Dashboard = () => {
       setChallenge(challengeData);
       setHabits(habitsData);
       setDayProgress(dayProgressData);
+
+      // Award streak bonus if applicable
+      if (challengeData && dayProgressData) {
+        const currentDay = dayProgressData.day;
+        const completedDays = challengeData.completedDays?.length || 0;
+        
+        if (completedDays >= 3) {
+          const streakPoints = awardPoints.streakBonus(completedDays);
+          if (streakPoints > 0) {
+            toast.success(`¡Racha de ${completedDays} días! +${streakPoints} puntos 🔥`, {
+              position: "top-right",
+              autoClose: 4000,
+            });
+          }
+        }
+      }
+      
     } catch (err) {
       setError(err.message || "Error al cargar los datos del dashboard");
     } finally {
@@ -69,7 +89,7 @@ const completedHabitsToday = habits.filter(h => h.isCompletedToday).length;
   const completionPercentage = Math.round((completedDays / totalDays) * 100);
   const currentDay = challenge.currentDay;
   
-  // Calculate current streak (consecutive completed days)
+// Calculate current streak (consecutive completed days)
   const calculateCurrentStreak = () => {
     const sortedDays = [...challenge.completedDays].sort((a, b) => b - a);
     let streak = 0;
@@ -92,6 +112,44 @@ const completedHabitsToday = habits.filter(h => h.isCompletedToday).length;
   };
   
   const currentStreak = calculateCurrentStreak();
+
+  // Handle habit toggle with points
+  const handleHabitToggle = async (habitId) => {
+    try {
+      const habit = habits.find(h => h.Id === habitId);
+      if (!habit) return;
+
+      const newCompletedState = !habit.isCompletedToday;
+      await habitService.update(habitId, { isCompletedToday: newCompletedState });
+      
+      if (newCompletedState) {
+        const points = awardPoints.habitCompletion(habit.name);
+        toast.success(`¡${habit.name} completado! +${points} puntos ⭐`, {
+          position: "top-right",
+          autoClose: 3000,
+        });
+
+        // Check for perfect day bonus
+        const updatedHabits = habits.map(h => 
+          h.Id === habitId ? { ...h, isCompletedToday: true } : h
+        );
+        const completedCount = updatedHabits.filter(h => h.isCompletedToday).length;
+        
+        if (completedCount === habits.length) {
+          const perfectDayPoints = awardPoints.perfectDay(completedCount, habits.length);
+          toast.success(`¡Día perfecto! +${perfectDayPoints} puntos bonus! 🎉`, {
+            position: "top-right",
+            autoClose: 4000,
+          });
+        }
+      }
+
+      // Refresh data
+      loadDashboardData();
+    } catch (error) {
+      toast.error("Error al actualizar el hábito");
+    }
+  };
   const habitCompletionRate = totalHabits > 0 ? Math.round((completedHabitsToday / totalHabits) * 100) : 0;
   
   // Motivational messages in Spanish based on progress

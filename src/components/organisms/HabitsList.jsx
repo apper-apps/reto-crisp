@@ -7,6 +7,9 @@ const HabitsList = ({ habits, onToggleHabit, className }) => {
   const completedCount = habits.filter(habit => habit.isCompletedToday).length;
   const totalCount = habits.length;
   const completionPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+  
+  // Calculate potential points
+  const potentialPoints = (totalCount - completedCount) * 10;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -33,7 +36,7 @@ const HabitsList = ({ habits, onToggleHabit, className }) => {
       ) : (
         <div className="space-y-3">
           {habits.map((habit) => (
-            <HabitItem
+<HabitItem
               key={habit.Id}
               habit={habit}
               onToggle={onToggleHabit}

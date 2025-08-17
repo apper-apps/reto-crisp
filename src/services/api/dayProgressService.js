@@ -27,8 +27,7 @@ class DayProgressService {
     }
     return { ...progress };
   }
-
-  async getToday() {
+async getToday() {
     await new Promise(resolve => setTimeout(resolve, 200));
     const today = new Date().toISOString().split('T')[0];
     let progress = this.dayProgress.find(p => p.date === today);
@@ -53,7 +52,7 @@ class DayProgressService {
     return { ...newProgress };
   }
 
-  async update(id, progressData) {
+async update(id, progressData) {
     await new Promise(resolve => setTimeout(resolve, 350));
     const index = this.dayProgress.findIndex(p => p.Id === id);
     if (index === -1) {

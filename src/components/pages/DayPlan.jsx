@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { toast } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
 import Card from "@/components/atoms/Card";
 import Button from "@/components/atoms/Button";
 import { cn } from "@/utils/cn";
+import { usePoints } from "@/contexts/PointsContext";
 
 const moments = [
   {
@@ -41,31 +43,32 @@ const moments = [
 
 const sampleContent = {
   morning: [
-    { type: 'habit', title: 'Desafío de Hidratación', completed: true },
-    { type: 'reflection', title: 'Reflexión: Mi compromiso personal con la hidratación', completed: false },
-    { type: 'activity', title: 'Preparar botella de agua para el día', completed: true }
+    { id: 1, type: 'habit', title: 'Desafío de Hidratación', completed: true },
+    { id: 2, type: 'reflection', title: 'Reflexión: Mi compromiso personal con la hidratación', completed: false },
+    { id: 3, type: 'activity', title: 'Preparar botella de agua para el día', completed: true }
   ],
   midday: [
-    { type: 'activity', title: 'Post educativo: Beneficios del agua en el cuerpo', completed: true },
-    { type: 'habit', title: 'Beber segundo vaso de agua', completed: false },
-    { type: 'note', title: 'Recordatorio: Agua antes del almuerzo', completed: false }
+    { id: 4, type: 'activity', title: 'Post educativo: Beneficios del agua en el cuerpo', completed: true },
+    { id: 5, type: 'habit', title: 'Beber segundo vaso de agua', completed: false },
+    { id: 6, type: 'note', title: 'Recordatorio: Agua antes del almuerzo', completed: false }
   ],
   evening: [
-    { type: 'activity', title: 'Encuesta: ¿Cómo te sientes? (Nivel de energía 1-5)', completed: false },
-    { type: 'habit', title: 'Evaluar mi hidratación del día', completed: true },
-    { type: 'reflection', title: 'Observar cambios en mi bienestar', completed: true }
+    { id: 7, type: 'activity', title: 'Encuesta: ¿Cómo te sientes? (Nivel de energía 1-5)', completed: false },
+    { id: 8, type: 'habit', title: 'Evaluar mi hidratación del día', completed: true },
+    { id: 9, type: 'reflection', title: 'Observar cambios en mi bienestar', completed: true }
   ],
   night: [
-    { type: 'reflection', title: 'Gratitud: Logros del día en hidratación', completed: false },
-    { type: 'activity', title: 'Confirmar cumplimiento del reto diario', completed: false },
-    { type: 'note', title: 'Preparar agua para mañana', completed: true }
+    { id: 10, type: 'reflection', title: 'Gratitud: Logros del día en hidratación', completed: false },
+    { id: 11, type: 'activity', title: 'Confirmar cumplimiento del reto diario', completed: false },
+    { id: 12, type: 'note', title: 'Preparar agua para mañana', completed: true }
   ]
 };
 
 function DayPlan({ day, challenge, onBack }) {
+  const { awardPoints } = usePoints();
   const [expandedMoments, setExpandedMoments] = useState({});
-
-  const toggleMoment = (momentId) => {
+  const [completedItems, setCompletedItems] = useState(new Set());
+const toggleMoment = (momentId) => {
     setExpandedMoments(prev => ({
       ...prev,
       [momentId]: !prev[momentId]
@@ -167,42 +170,65 @@ function DayPlan({ day, challenge, onBack }) {
               </div>
 
               {/* Expandable Content */}
-              {expandedMoments[moment.id] && (
+{expandedMoments[moment.id] && (
                 <div className="mt-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
-                  {sampleContent[moment.id]?.map((item, index) => (
-                    <div 
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-white/60 rounded-lg"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <ApperIcon 
-                          name={getContentIcon(item.type)} 
-                          size={16} 
-                          className={getContentColor(item.type, item.completed)}
-                        />
-                        <div>
-                          <p className={cn(
-                            "text-sm font-medium",
-                            item.completed ? "text-gray-500 line-through" : "text-gray-900"
-                          )}>
-                            {item.title}
-                          </p>
-                          <p className="text-xs text-gray-600 capitalize">{item.type}</p>
-                        </div>
-                      </div>
-                      
-                      <div className={cn(
-                        "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                        item.completed 
-                          ? "bg-success border-success" 
-                          : "border-gray-300"
-                      )}>
-                        {item.completed && (
-                          <ApperIcon name="Check" size={12} className="text-white" />
+                  {sampleContent[moment.id]?.map((item, index) => {
+                    const isCompleted = item.completed || completedItems.has(item.id);
+                    
+                    const handleItemToggle = () => {
+                      if (!isCompleted) {
+                        setCompletedItems(prev => new Set([...prev, item.id]));
+                        
+                        const points = awardPoints.dailyMoment(item.type);
+                        toast.success(`¡${item.title.substring(0, 30)}...! +${points} puntos ✨`, {
+                          position: "top-right",
+                          autoClose: 2500,
+                        });
+                      }
+                    };
+                    
+                    return (
+                      <div 
+                        key={item.id}
+                        className={cn(
+                          "flex items-center justify-between p-3 bg-white/60 rounded-lg transition-all duration-300",
+                          isCompleted && "bg-green-50/80 ring-1 ring-green-200"
                         )}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <ApperIcon 
+                            name={getContentIcon(item.type)} 
+                            size={16} 
+                            className={getContentColor(item.type, isCompleted)}
+                          />
+                          <div>
+                            <p className={cn(
+                              "text-sm font-medium transition-all",
+                              isCompleted ? "text-gray-500 line-through" : "text-gray-900"
+                            )}>
+                              {item.title}
+                            </p>
+                            <p className="text-xs text-gray-600 capitalize">{item.type}</p>
+                          </div>
+                        </div>
+                        
+                        <button
+                          onClick={handleItemToggle}
+                          disabled={isCompleted}
+                          className={cn(
+                            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                            isCompleted 
+                              ? "bg-success border-success cursor-default" 
+                              : "border-gray-300 hover:border-success hover:scale-110 cursor-pointer"
+                          )}
+                        >
+                          {isCompleted && (
+                            <ApperIcon name="Check" size={12} className="text-white" />
+                          )}
+                        </button>
                       </div>
-                    </div>
-                  )) || (
+                    );
+                  }) || (
                     <div className="text-center py-6 text-gray-500">
                       <ApperIcon name="Calendar" size={24} className="mx-auto mb-2 opacity-50" />
                       <p className="text-sm">No hay contenido programado para este momento</p>

@@ -33,7 +33,7 @@ class HabitService {
     return { ...newHabit };
   }
 
-  async update(id, habitData) {
+async update(id, habitData) {
     await new Promise(resolve => setTimeout(resolve, 350));
     const index = this.habits.findIndex(h => h.Id === id);
     if (index === -1) {
