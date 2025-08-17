@@ -14,13 +14,13 @@ function ProgressCharts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 const [timeRange, setTimeRange] = useState('7days'); // 7days, 14days, 21days
-  const [chartData, setChartData] = useState({
+const [chartData, setChartData] = useState({
     habitTrends: null,
     challengeProgress: null,
     weeklyComparison: null,
     categoryBreakdown: null
   });
-  const [summaryStats, setSummaryStats] = useState(null);
+const [summaryStats, setSummaryStats] = useState(null);
 const loadChartData = async () => {
     try {
       setLoading(true);
@@ -72,7 +72,7 @@ const loadChartData = async () => {
     } finally {
       setLoading(false);
     }
-};
+  };
 
   useEffect(() => {
     loadChartData();
@@ -221,57 +221,104 @@ const loadChartData = async () => {
         columnWidth: '70%'
       }
     }
-  });
+});
 
-
-
-if (loading) return <Loading />;
-  if (error) return <Error message={error} onRetry={loadChartData} />;
+  if (loading) return <Loading message="Cargando gráficos de progreso..." />;
+  if (error) return <Error message={error} />;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold font-display text-gray-900">
-            Progreso Visual
+          <h1 className="text-3xl font-display font-bold text-gray-900">
+            Gráficos de Progreso
           </h1>
           <p className="text-gray-600 mt-1">
-            Análisis detallado de tu evolución en el reto
+            Visualiza tu progreso con gráficos detallados y análisis de tendencias
           </p>
         </div>
-
-        {/* Time Range Selector */}
-        <div className="flex gap-2">
+        
+        {/* Time Range Controls */}
+        <div className="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm">
           {[
             { value: '7days', label: '7 días' },
             { value: '14days', label: '14 días' },
             { value: '21days', label: '21 días' }
-          ].map(({ value, label }) => (
+          ].map(range => (
             <Button
-              key={value}
-              variant={timeRange === value ? 'primary' : 'outline'}
+              key={range.value}
+              variant={timeRange === range.value ? 'primary' : 'ghost'}
               size="sm"
-              onClick={() => handleTimeRangeChange(value)}
+              onClick={() => handleTimeRangeChange(range.value)}
+              className="px-4 py-2 text-sm"
             >
-              {label}
+              {range.label}
             </Button>
           ))}
         </div>
       </div>
 
-{/* Charts Grid */}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Habit Completion Trends */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <ApperIcon name="TrendingUp" size={20} className="text-primary" />
-              <h3 className="text-lg font-semibold text-gray-900">
-                Tendencias de Hábitos
-              </h3>
+      {/* Weekly Summary Stats */}
+      {summaryStats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-green-100 rounded-lg">
+                <ApperIcon name="Calendar" className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-green-700 font-medium">Días Completados</p>
+                <p className="text-2xl font-bold text-green-800">{summaryStats.completedDays}/7</p>
+              </div>
             </div>
+          </Card>
+
+          <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <ApperIcon name="TrendingUp" className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-blue-700 font-medium">Promedio Semanal</p>
+                <p className="text-2xl font-bold text-blue-800">{summaryStats.averageCompletion}%</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-purple-100 rounded-lg">
+                <ApperIcon name="Trophy" className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-purple-700 font-medium">Mejor Hábito</p>
+                <p className="text-lg font-bold text-purple-800">{summaryStats.bestHabit}</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-amber-100 rounded-lg">
+                <ApperIcon name="Target" className="w-6 h-6 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm text-amber-700 font-medium">Consistencia</p>
+                <p className="text-lg font-bold text-amber-800">{summaryStats.consistencyLevel}</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Habit Trends Chart */}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <ApperIcon name="TrendingUp" className="w-5 h-5 text-blue-600" />
+            <h2 className="text-xl font-semibold text-gray-900">Tendencias de Hábitos</h2>
           </div>
           {chartData.habitTrends ? (
             <Chart
@@ -281,88 +328,76 @@ if (loading) return <Loading />;
               height={350}
             />
           ) : (
-            <div className="h-[350px] flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <ApperIcon name="BarChart3" size={48} className="mx-auto mb-2 opacity-50" />
-                <p>Datos de tendencias no disponibles</p>
-              </div>
+            <div className="h-[350px] flex items-center justify-center">
+              <Loading message="Cargando tendencias..." />
             </div>
           )}
         </Card>
 
-        {/* Challenge Progress */}
+        {/* Challenge Progress Chart */}
         <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <ApperIcon name="Target" size={20} className="text-success" />
-              <h3 className="text-lg font-semibold text-gray-900">
-                Progreso del Reto
-              </h3>
-            </div>
+          <div className="flex items-center gap-2 mb-6">
+            <ApperIcon name="Target" className="w-5 h-5 text-purple-600" />
+            <h2 className="text-xl font-semibold text-gray-900">Progreso del Reto</h2>
           </div>
           {chartData.challengeProgress ? (
             <Chart
               options={getChallengeProgressOptions()}
               series={[{
-                name: 'Progreso',
+                name: 'Progreso del Reto',
                 data: chartData.challengeProgress.data
               }]}
               type="area"
-              height={300}
+              height={350}
             />
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <ApperIcon name="Target" size={48} className="mx-auto mb-2 opacity-50" />
-                <p>Datos de progreso no disponibles</p>
-              </div>
+            <div className="h-[350px] flex items-center justify-center">
+              <Loading message="Cargando progreso del reto..." />
             </div>
           )}
         </Card>
 
         {/* Category Breakdown */}
         <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <ApperIcon name="PieChart" size={20} className="text-warning" />
-              <h3 className="text-lg font-semibold text-gray-900">
-                Hábitos por Categoría
-              </h3>
-            </div>
+          <div className="flex items-center gap-2 mb-6">
+            <ApperIcon name="PieChart" className="w-5 h-5 text-green-600" />
+            <h2 className="text-xl font-semibold text-gray-900">Distribución por Categorías</h2>
           </div>
-          {chartData.categoryBreakdown && chartData.categoryBreakdown.length > 0 ? (
+          {chartData.categoryBreakdown ? (
             <Chart
               options={getCategoryBreakdownOptions()}
-              series={chartData.categoryBreakdown.map(cat => cat.completed)}
+              series={chartData.categoryBreakdown.map(cat => Math.round((cat.completed / cat.total) * 100))}
               type="donut"
-              height={300}
+              height={350}
             />
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <ApperIcon name="PieChart" size={48} className="mx-auto mb-2 opacity-50" />
-                <p>Sin datos de categorías</p>
-              </div>
+            <div className="h-[350px] flex items-center justify-center">
+              <Loading message="Cargando categorías..." />
             </div>
           )}
         </Card>
 
         {/* Weekly Comparison */}
         <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <ApperIcon name="BarChart3" size={20} className="text-info" />
-              <h3 className="text-lg font-semibold text-gray-900">
-                Comparación Semanal
-              </h3>
-            </div>
+          <div className="flex items-center gap-2 mb-6">
+            <ApperIcon name="BarChart3" className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-xl font-semibold text-gray-900">Comparación Semanal</h2>
+            {chartData.weeklyComparison?.improvement !== undefined && (
+              <span className={`ml-auto px-2 py-1 rounded-full text-xs font-medium ${
+                chartData.weeklyComparison.improvement > 0 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {chartData.weeklyComparison.improvement > 0 ? '+' : ''}{chartData.weeklyComparison.improvement}%
+              </span>
+            )}
           </div>
           {chartData.weeklyComparison ? (
             <Chart
               options={getWeeklyComparisonOptions()}
               series={[
                 {
-                  name: 'Semana Actual',
+                  name: 'Esta Semana',
                   data: chartData.weeklyComparison.currentWeek
                 },
                 {
@@ -370,89 +405,17 @@ if (loading) return <Loading />;
                   data: chartData.weeklyComparison.previousWeek
                 }
               ]}
-              type="bar"
-              height={300}
+              type="column"
+              height={350}
             />
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
-              <div className="text-center">
-                <ApperIcon name="BarChart3" size={48} className="mx-auto mb-2 opacity-50" />
-                <p>Datos de comparación no disponibles</p>
-              </div>
+            <div className="h-[350px] flex items-center justify-center">
+              <Loading message="Cargando comparación semanal..." />
             </div>
           )}
         </Card>
       </div>
-
-      {/* Summary Statistics */}
-      {summaryStats && (
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <ApperIcon name="BarChart2" size={24} className="text-primary" />
-            Resumen Semanal
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary mb-1">
-                  {summaryStats.completedDays}
-                </div>
-                <div className="text-sm text-gray-600">Días Completados</div>
-              </div>
-            </Card>
-            <Card className="p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-success mb-1">
-                  {summaryStats.averageCompletion}%
-                </div>
-                <div className="text-sm text-gray-600">Promedio de Cumplimiento</div>
-              </div>
-            </Card>
-            <Card className="p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-warning mb-1">
-                  {summaryStats.bestHabit}
-                </div>
-                <div className="text-sm text-gray-600">Mejor Hábito</div>
-              </div>
-            </Card>
-            <Card className="p-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-info mb-1">
-                  {summaryStats.consistencyLevel}
-                </div>
-                <div className="text-sm text-gray-600">Nivel de Consistencia</div>
-              </div>
-            </Card>
-          </div>
-
-          {chartData.weeklyComparison && (
-            <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100">
-              <div className="flex items-center gap-2 mb-2">
-                <ApperIcon name="TrendingUp" size={20} className="text-primary" />
-                <h3 className="font-semibold text-gray-900">Mejora Semanal</h3>
-              </div>
-              <p className="text-gray-700">
-                {chartData.weeklyComparison.improvement > 0 ? (
-                  <span className="text-success font-medium">
-                    ¡Excelente! Mejoraste un {chartData.weeklyComparison.improvement}% respecto a la semana anterior
-                  </span>
-                ) : chartData.weeklyComparison.improvement < 0 ? (
-                  <span className="text-warning font-medium">
-                    Bajaste un {Math.abs(chartData.weeklyComparison.improvement)}% respecto a la semana anterior. ¡Puedes mejorar!
-                  </span>
-                ) : (
-                  <span className="text-info font-medium">
-                    Te mantuviste igual que la semana anterior. ¡Sigue así!
-                  </span>
-                )}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-</div>
+    </div>
   );
 }
 
