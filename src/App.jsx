@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-import { AchievementProvider } from "@/contexts/AchievementContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { AchievementProvider } from "@/contexts/AchievementContext";
 import { PointsProvider } from "@/contexts/PointsContext";
 import Day0Assessment from "@/components/pages/Day0Assessment";
 import ProgressCharts from "@/components/pages/ProgressCharts";
@@ -19,47 +19,48 @@ const App = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  const handleSidebarClose = () => {
+const handleSidebarClose = () => {
     setSidebarOpen(false);
   };
 
   return (
-    <PointsProvider>
-    <NotificationProvider>
+    <BrowserRouter>
+      <div className="flex h-screen bg-gray-100">
         <NotificationProvider>
-            <AchievementProvider>
-                <div className="min-h-screen bg-background">
-                    <Header onMenuToggle={handleMenuToggle} />
-                    <div className="flex h-[calc(100vh-80px)]">
-                        <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} />
-                        <main className="flex-1 overflow-auto">
-                            <div className="p-4 lg:p-6 max-w-7xl mx-auto">
-                                <Routes>
-                                    <Route path="/" element={<Dashboard />} />
-                                    <Route path="/dia-0" element={<Day0Assessment />} />
-                                    <Route path="/mi-reto" element={<MiReto />} />
-                                    <Route path="/habitos" element={<Habitos />} />
-                                    <Route path="/progreso" element={<ProgressCharts />} />
-                                    <Route path="/perfil" element={<Perfil />} />
-                                </Routes>
-                            </div>
-                        </main>
-                    </div>
-                </div></AchievementProvider>
+          <AchievementProvider>
+            <PointsProvider>
+              <Sidebar isOpen={sidebarOpen} onClose={handleSidebarClose} />
+              
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <Header onMenuToggle={handleMenuToggle} />
+                
+                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/dia-0" element={<Day0Assessment />} />
+                    <Route path="/mi-reto" element={<MiReto />} />
+                    <Route path="/habitos" element={<Habitos />} />
+                    <Route path="/progreso" element={<ProgressCharts />} />
+                    <Route path="/perfil" element={<Perfil />} />
+                  </Routes>
+                </main>
+              </div>
+            </PointsProvider>
+          </AchievementProvider>
         </NotificationProvider>
-        <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light" />
-    </NotificationProvider>
-</PointsProvider>
+      </div>
+      <ToastContainer 
+        position="top-right"
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light" 
+      />
+    </BrowserRouter>
   );
 };
 
