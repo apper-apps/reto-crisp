@@ -19,10 +19,19 @@ class DayProgressService {
     return { ...progress };
   }
 
-  async getByDay(day) {
+async getByDay(day) {
     await new Promise(resolve => setTimeout(resolve, 250));
     const progress = this.dayProgress.find(p => p.day === day);
     if (!progress) {
+      // For Day 0, return a default structure if not found
+      if (day === 0) {
+        return {
+          Id: 0,
+          day: 0,
+          completed: false,
+          assessment: null
+        };
+      }
       throw new Error(`Progreso para el día ${day} no encontrado`);
     }
     return { ...progress };
@@ -40,12 +49,13 @@ async getToday() {
     return progress ? { ...progress } : null;
   }
 
-  async create(progressData) {
+async create(progressData) {
     await new Promise(resolve => setTimeout(resolve, 400));
     const maxId = Math.max(...this.dayProgress.map(p => p.Id), 0);
     const newProgress = {
       Id: maxId + 1,
-      ...progressData
+      ...progressData,
+      createdAt: new Date().toISOString()
     };
     
     this.dayProgress.push(newProgress);
@@ -59,7 +69,11 @@ async update(id, progressData) {
       throw new Error(`Progreso con ID ${id} no encontrado`);
     }
     
-    this.dayProgress[index] = { ...this.dayProgress[index], ...progressData };
+    this.dayProgress[index] = { 
+      ...this.dayProgress[index], 
+      ...progressData,
+      updatedAt: new Date().toISOString()
+    };
     return { ...this.dayProgress[index] };
   }
 

@@ -4,8 +4,9 @@ import NavItem from "@/components/molecules/NavItem";
 import ApperIcon from "@/components/ApperIcon";
 
 const Sidebar = ({ isOpen, onClose, className }) => {
-  const navItems = [
+const navItems = [
     { to: "/", icon: "Home", label: "Dashboard" },
+    { to: "/dia-0", icon: "Target", label: "Día 0" },
     { to: "/mi-reto", icon: "Calendar", label: "Mi Reto" },
     { to: "/habitos", icon: "CheckSquare", label: "Hábitos" },
     { to: "/perfil", icon: "User", label: "Perfil" },
