@@ -104,17 +104,19 @@ const loadDashboardData = async () => {
       setLoading(true);
       setError("");
       
-      const [challengeData, habitsData, dayProgressData, weeklyData] = await Promise.all([
+      const [challengeData, habitsData, dayProgressData, weeklyData, miniChallengesData] = await Promise.all([
         challengeService.getActive(),
         habitService.getAll(),
         dayProgressService.getToday(),
-        habitService.getWeeklyStats()
+        habitService.getWeeklyStats(),
+        challengeService.getActiveMiniChallenges()
       ]);
       
       setChallenge(challengeData);
       setHabits(habitsData);
       setDayProgress(dayProgressData);
       setWeeklyStats(weeklyData);
+      setMiniChallenges(miniChallengesData);
 
       // Award streak bonus if applicable
       if (challengeData && dayProgressData) {

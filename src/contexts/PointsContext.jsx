@@ -90,6 +90,12 @@ setTimeout(() => setCelebrating(false), 1000);
       refreshPoints();
       triggerCelebration();
       return points;
+},
+    awardMiniChallenge: (challengeName, challengePoints) => {
+      const points = pointsService.awardMiniChallengeCompletion(challengeName, challengePoints);
+      refreshPoints();
+      triggerCelebration();
+      return points;
     }
 };
 
