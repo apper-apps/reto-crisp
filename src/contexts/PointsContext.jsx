@@ -91,7 +91,7 @@ setTimeout(() => setCelebrating(false), 1000);
       triggerCelebration();
       return points;
     }
-  };
+};
 
 const value = {
     totalPoints,
@@ -100,15 +100,6 @@ const value = {
     refreshPoints,
     awardPoints
   };
-
-const value = {
-    totalPoints,
-    celebrating,
-    streakCelebration,
-    refreshPoints,
-    awardPoints
-  };
-
   return (
     <PointsContext.Provider value={value}>
       {children}
