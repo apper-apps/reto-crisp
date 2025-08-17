@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { assessmentService } from "@/services/api/assessmentService";
 import { usePoints } from "@/contexts/PointsContext";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
 import { cn } from "@/utils/cn";
-import { assessmentService } from "@/services/api/assessmentService";
 
 const moments = [
   {
@@ -42,107 +42,337 @@ const moments = [
   }
 ];
 
-const sampleContent = {
-  morning: [
-    { 
-      id: 1, 
-      type: 'activity', 
-      title: 'Desafío de Hidratación', 
-      description: 'Confirma que has preparado tu botella de agua',
-      completed: true 
-    },
-    { 
-      id: 2, 
-      type: 'reflection', 
-      title: 'Mi compromiso personal con la hidratación', 
-      prompt: '¿Qué te motiva a mantenerte hidratado hoy?',
-      completed: false 
-    },
-    { 
-      id: 3, 
-      type: 'survey', 
-      title: '¿Cómo te sientes al despertar?', 
-      question: 'Califica tu nivel de energía matutino',
-      scale: { min: 1, max: 5, labels: ['Muy bajo', 'Bajo', 'Regular', 'Alto', 'Muy alto'] },
-      completed: true,
-      response: 4
-    }
-  ],
-  midday: [
-    { 
-      id: 4, 
-      type: 'education', 
-      title: 'Beneficios del agua en el cuerpo', 
-      content: 'El agua ayuda a transportar nutrientes, regular temperatura corporal y eliminar toxinas.',
-      image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=240&fit=crop',
-      completed: true 
-    },
-    { 
-      id: 5, 
-      type: 'activity', 
-      title: 'Beber segundo vaso de agua', 
-      description: 'Confirma que has bebido tu segundo vaso del día',
-      completed: false 
-    },
-    { 
-      id: 6, 
-      type: 'survey', 
-      title: 'Nivel de hidratación a medio día', 
-      question: '¿Qué tan hidratado te sientes?',
-      scale: { min: 1, max: 5, labels: ['Muy deshidratado', 'Deshidratado', 'Normal', 'Hidratado', 'Muy hidratado'] },
-      completed: false 
-    }
-  ],
-  evening: [
-    { 
-      id: 7, 
-      type: 'survey', 
-      title: '¿Cómo te sientes?', 
-      question: 'Califica tu nivel de energía al final del día',
-      scale: { min: 1, max: 5, labels: ['Muy cansado', 'Cansado', 'Regular', 'Energético', 'Muy energético'] },
-      completed: false 
-    },
-    { 
-      id: 8, 
-      type: 'reflection', 
-      title: 'Evaluar mi hidratación del día', 
-      prompt: '¿Cómo ha sido tu experiencia con la hidratación hoy? ¿Qué cambios notaste?',
-      completed: true,
-      response: 'Me sentí más energético y concentrado durante el día.'
-    },
-    { 
-      id: 9, 
-      type: 'education', 
-      title: 'Importancia de la hidratación nocturna', 
-      content: 'Mantener un nivel adecuado de hidratación durante la noche ayuda a la recuperación muscular y la regeneración celular.',
-      image: 'https://images.unsplash.com/photo-1571897349842-73856c6ead5a?w=400&h=240&fit=crop',
-      completed: true 
-    }
-  ],
-  night: [
-    { 
-      id: 10, 
-      type: 'reflection', 
-      title: 'Gratitud: Logros del día en hidratación', 
-      prompt: '¿De qué logro relacionado con la hidratación te sientes más orgulloso hoy?',
-      completed: false 
-    },
-    { 
-      id: 11, 
-      type: 'activity', 
-      title: 'Confirmar cumplimiento del reto diario', 
-      description: 'Has completado tu objetivo de hidratación diaria',
-      completed: false 
-    },
-    { 
-      id: 12, 
-      type: 'education', 
-      title: 'Preparación para mañana', 
-      content: 'Preparar tu botella de agua la noche anterior te ayuda a establecer una rutina exitosa.',
-      image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=240&fit=crop',
-      completed: true 
-    }
-  ]
+const getDayContent = (day) => {
+  // Day 1: Hydration Focus
+  if (day === 1) {
+    return {
+      morning: [
+        { 
+          id: 1, 
+          type: 'activity', 
+          title: 'Desafío de Hidratación', 
+          description: 'Confirma que has preparado tu botella de agua',
+          completed: true 
+        },
+        { 
+          id: 2, 
+          type: 'reflection', 
+          title: 'Mi compromiso personal con la hidratación', 
+          prompt: '¿Qué te motiva a mantenerte hidratado hoy?',
+          completed: false 
+        },
+        { 
+          id: 3, 
+          type: 'survey', 
+          title: '¿Cómo te sientes al despertar?', 
+          question: 'Califica tu nivel de energía matutino',
+          scale: { min: 1, max: 5, labels: ['Muy bajo', 'Bajo', 'Regular', 'Alto', 'Muy alto'] },
+          completed: true,
+          response: 4
+        }
+      ],
+      midday: [
+        { 
+          id: 4, 
+          type: 'education', 
+          title: 'Beneficios del agua en el cuerpo', 
+          content: 'El agua ayuda a transportar nutrientes, regular temperatura corporal y eliminar toxinas.',
+          image: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=240&fit=crop',
+          completed: true 
+        },
+        { 
+          id: 5, 
+          type: 'activity', 
+          title: 'Beber segundo vaso de agua', 
+          description: 'Confirma que has bebido tu segundo vaso del día',
+          completed: false 
+        },
+        { 
+          id: 6, 
+          type: 'survey', 
+          title: 'Nivel de hidratación a medio día', 
+          question: '¿Qué tan hidratado te sientes?',
+          scale: { min: 1, max: 5, labels: ['Muy deshidratado', 'Deshidratado', 'Normal', 'Hidratado', 'Muy hidratado'] },
+          completed: false 
+        }
+      ],
+      evening: [
+        { 
+          id: 7, 
+          type: 'survey', 
+          title: '¿Cómo te sientes?', 
+          question: 'Califica tu nivel de energía al final del día',
+          scale: { min: 1, max: 5, labels: ['Muy cansado', 'Cansado', 'Regular', 'Energético', 'Muy energético'] },
+          completed: false 
+        },
+        { 
+          id: 8, 
+          type: 'reflection', 
+          title: 'Evaluar mi hidratación del día', 
+          prompt: '¿Cómo ha sido tu experiencia con la hidratación hoy? ¿Qué cambios notaste?',
+          completed: true,
+          response: 'Me sentí más energético y concentrado durante el día.'
+        },
+        { 
+          id: 9, 
+          type: 'education', 
+          title: 'Importancia de la hidratación nocturna', 
+          content: 'Mantener un nivel adecuado de hidratación durante la noche ayuda a la recuperación muscular y la regeneración celular.',
+          image: 'https://images.unsplash.com/photo-1571897349842-73856c6ead5a?w=400&h=240&fit=crop',
+          completed: true 
+        }
+      ],
+      night: [
+        { 
+          id: 10, 
+          type: 'reflection', 
+          title: 'Gratitud: Logros del día en hidratación', 
+          prompt: '¿De qué logro relacionado con la hidratación te sientes más orgulloso hoy?',
+          completed: false 
+        },
+        { 
+          id: 11, 
+          type: 'activity', 
+          title: 'Confirmar cumplimiento del reto diario', 
+          description: 'Has completado tu objetivo de hidratación diaria',
+          completed: false 
+        },
+        { 
+          id: 12, 
+          type: 'education', 
+          title: 'Preparación para mañana', 
+          content: 'Preparar tu botella de agua la noche anterior te ayuda a establecer una rutina exitosa.',
+          image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=240&fit=crop',
+          completed: true 
+        }
+      ]
+    };
+  }
+  
+  // Day 2: Exercise & Movement Focus
+  if (day === 2) {
+    return {
+      morning: [
+        { 
+          id: 21, 
+          type: 'activity', 
+          title: 'Rutina de Estiramientos Matutinos', 
+          description: 'Completa 5 minutos de estiramientos para activar tu cuerpo',
+          duration: 300, // 5 minutes in seconds
+          completed: false 
+        },
+        { 
+          id: 22, 
+          type: 'photo', 
+          title: 'Foto de Motivación Pre-Ejercicio', 
+          description: 'Tómate una selfie antes de comenzar tu día activo',
+          completed: true,
+          image: null
+        },
+        { 
+          id: 23, 
+          type: 'survey', 
+          title: 'Nivel de Energía Matutino', 
+          question: '¿Qué tan preparado te sientes para moverte hoy?',
+          scale: { min: 1, max: 5, labels: ['Nada preparado', 'Poco preparado', 'Moderado', 'Muy preparado', 'Súper motivado'] },
+          completed: false
+        }
+      ],
+      midday: [
+        { 
+          id: 24, 
+          type: 'timer', 
+          title: 'Sesión de Ejercicio Cardiovascular', 
+          description: 'Realiza 20 minutos de actividad cardiovascular (caminar, correr, bailar)',
+          duration: 1200, // 20 minutes
+          completed: false 
+        },
+        { 
+          id: 25, 
+          type: 'education', 
+          title: 'Beneficios del Ejercicio Cardiovascular', 
+          content: 'El ejercicio cardiovascular fortalece el corazón, mejora la circulación, quema calorías y libera endorfinas que mejoran el estado de ánimo.',
+          image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=240&fit=crop',
+          completed: false 
+        },
+        { 
+          id: 26, 
+          type: 'reflection', 
+          title: 'Reflexión Post-Ejercicio', 
+          prompt: '¿Cómo te sientes después de moverte? ¿Qué sensaciones notas en tu cuerpo?',
+          completed: false
+        }
+      ],
+      evening: [
+        { 
+          id: 27, 
+          type: 'activity', 
+          title: 'Caminata de Recuperación', 
+          description: 'Realiza una caminata suave de 10 minutos para recuperarte',
+          completed: false 
+        },
+        { 
+          id: 28, 
+          type: 'survey', 
+          title: 'Evaluación de Fuerza Muscular', 
+          question: '¿Cómo sientes tus músculos después del día de ejercicio?',
+          scale: { min: 1, max: 5, labels: ['Muy doloridos', 'Doloridos', 'Normal', 'Fuertes', 'Muy fuertes'] },
+          completed: false
+        },
+        { 
+          id: 29, 
+          type: 'education', 
+          title: 'Importancia de la Recuperación Activa', 
+          content: 'La recuperación activa con movimientos suaves ayuda a reducir la acumulación de ácido láctico y mejora la flexibilidad.',
+          image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=240&fit=crop',
+          completed: false 
+        }
+      ],
+      night: [
+        { 
+          id: 30, 
+          type: 'timer', 
+          title: 'Sesión de Yoga Nocturno', 
+          description: 'Practica yoga restaurativo para relajar músculos y mente',
+          duration: 600, // 10 minutes
+          completed: false 
+        },
+        { 
+          id: 31, 
+          type: 'reflection', 
+          title: 'Gratitud por el Movimiento', 
+          prompt: '¿Qué movimiento o ejercicio de hoy te hizo sentir más vivo y agradecido con tu cuerpo?',
+          completed: false 
+        },
+        { 
+          id: 32, 
+          type: 'activity', 
+          title: 'Registro de Logros del Día', 
+          description: 'Confirma que completaste tus objetivos de movimiento diario',
+          completed: false 
+        }
+      ]
+    };
+  }
+  
+  // Day 3: Nutrition & Mindfulness Focus
+  if (day === 3) {
+    return {
+      morning: [
+        { 
+          id: 41, 
+          type: 'photo', 
+          title: 'Foto de Desayuno Saludable', 
+          description: 'Captura tu desayuno balanceado y colorido',
+          completed: false,
+          image: null
+        },
+        { 
+          id: 42, 
+          type: 'mindfulness', 
+          title: 'Meditación de Alimentación Consciente', 
+          description: 'Practica 5 minutos de mindfulness antes de comer',
+          duration: 300,
+          guide: 'Respira profundo, observa los colores, texturas y aromas de tu comida. Come lentamente, saboreando cada bocado.',
+          completed: false 
+        },
+        { 
+          id: 43, 
+          type: 'survey', 
+          title: 'Nivel de Hambre Matutino', 
+          question: '¿Qué tan hambriento te sientes al despertar?',
+          scale: { min: 1, max: 5, labels: ['Nada hambriento', 'Poco hambre', 'Hambre moderada', 'Bastante hambre', 'Muy hambriento'] },
+          completed: false
+        }
+      ],
+      midday: [
+        { 
+          id: 44, 
+          type: 'nutrition', 
+          title: 'Planificación de Almuerzo Balanceado', 
+          description: 'Planifica un almuerzo que incluya proteína, carbohidratos complejos y vegetales',
+          categories: ['Proteína', 'Carbohidratos', 'Vegetales', 'Grasas saludables'],
+          completed: false 
+        },
+        { 
+          id: 45, 
+          type: 'education', 
+          title: 'Macronutrientes Esenciales', 
+          content: 'Los macronutrientes (proteínas, carbohidratos y grasas) son fundamentales para el funcionamiento óptimo del cuerpo. Cada uno cumple funciones específicas en el metabolismo y la salud.',
+          image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&h=240&fit=crop',
+          completed: false 
+        },
+        { 
+          id: 46, 
+          type: 'hydration', 
+          title: 'Control de Hidratación Consciente', 
+          description: 'Registra cuántos vasos de agua has bebido hasta ahora',
+          target: 4,
+          completed: false,
+          current: 0
+        }
+      ],
+      evening: [
+        { 
+          id: 47, 
+          type: 'photo', 
+          title: 'Foto de Cena Nutritiva', 
+          description: 'Documenta tu cena equilibrada del día',
+          completed: false,
+          image: null
+        },
+        { 
+          id: 48, 
+          type: 'reflection', 
+          title: 'Reflexión sobre Hábitos Alimentarios', 
+          prompt: '¿Cómo te sentiste al comer conscientemente hoy? ¿Notaste diferencias en tu digestión o saciedad?',
+          completed: false
+        },
+        { 
+          id: 49, 
+          type: 'survey', 
+          title: 'Nivel de Energía Post-Comidas', 
+          question: '¿Cómo se mantuvo tu energía durante el día con tus elecciones alimentarias?',
+          scale: { min: 1, max: 5, labels: ['Muy baja', 'Baja', 'Estable', 'Alta', 'Muy alta y constante'] },
+          completed: false
+        }
+      ],
+      night: [
+        { 
+          id: 50, 
+          type: 'mindfulness', 
+          title: 'Meditación de Gratitud por los Alimentos', 
+          description: 'Reflexiona con gratitud sobre los alimentos que nutrieron tu cuerpo hoy',
+          duration: 480, // 8 minutes
+          guide: 'Respira profundo y recuerda cada comida del día. Siente gratitud hacia la tierra, los agricultores y todos los que hicieron posible tu nutrición.',
+          completed: false 
+        },
+        { 
+          id: 51, 
+          type: 'nutrition', 
+          title: 'Registro Nutricional del Día', 
+          description: 'Evalúa qué tan balanceada fue tu alimentación hoy',
+          categories: ['Frutas y vegetales', 'Proteínas', 'Granos integrales', 'Lácteos/Alternativas', 'Grasas saludables'],
+          completed: false 
+        },
+        { 
+          id: 52, 
+          type: 'activity', 
+          title: 'Preparación Consciente para Mañana', 
+          description: 'Planifica mentalmente tu primera comida del día siguiente',
+          completed: false 
+        }
+      ]
+    };
+  }
+  
+  // Default empty content for other days
+  return {
+    morning: [],
+    midday: [],
+    evening: [],
+    night: []
+  };
 };
 
 function DayPlan({ day, challenge, onBack }) {
@@ -816,27 +1046,24 @@ function DayPlan({ day, challenge, onBack }) {
   // Show Day 21 completion flow if triggered
   if (showCompletionFlow) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 py-8">
-        <div className="max-w-6xl mx-auto px-4">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              ¡Día 21 - Final del Reto!
-            </h1>
-            <p className="text-lg text-gray-600">
-              Completa tu evaluación final para ver tu transformación
-            </p>
-          </div>
-
-          {renderStepIndicator()}
-
-          {completionStep === 1 && renderMetricsStep()}
-          {completionStep === 2 && renderPhotosStep()}
-          {completionStep === 3 && renderSurveyStep()}
-          {completionStep === 4 && renderTestimonialStep()}
-          {completionStep === 5 && renderCompletionSummary()}
+      <div
+    className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 py-8">
+    <div className="max-w-6xl mx-auto px-4">
+        {/* Header */}
+        <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">¡Día 21 - Final del Reto!
+                            </h1>
+            <p className="text-lg text-gray-600">Completa tu evaluación final para ver tu transformación
+                            </p>
         </div>
-      </div>
+        {renderStepIndicator()}
+        {completionStep === 1 && renderMetricsStep()}
+        {completionStep === 2 && renderPhotosStep()}
+        {completionStep === 3 && renderSurveyStep()}
+        {completionStep === 4 && renderTestimonialStep()}
+        {completionStep === 5 && renderCompletionSummary()}
+    </div>
+</div>
     );
   }
 
@@ -847,12 +1074,17 @@ function DayPlan({ day, challenge, onBack }) {
     }));
   };
 
-  const getContentIcon = (type) => {
+const getContentIcon = (type) => {
     switch (type) {
       case 'survey': return 'BarChart3';
-case 'reflection': return 'Heart';
+      case 'reflection': return 'Heart';
       case 'education': return 'BookOpen';
       case 'activity': return 'CheckCircle2';
+      case 'photo': return 'Camera';
+      case 'timer': return 'Timer';
+      case 'mindfulness': return 'Brain';
+      case 'nutrition': return 'Apple';
+      case 'hydration': return 'Droplets';
       default: return 'Circle';
     }
   };
@@ -864,6 +1096,11 @@ case 'reflection': return 'Heart';
       case 'reflection': return 'text-purple-600';
       case 'education': return 'text-amber-600';
       case 'activity': return 'text-green-600';
+      case 'photo': return 'text-pink-600';
+      case 'timer': return 'text-orange-600';
+      case 'mindfulness': return 'text-purple-600';
+      case 'nutrition': return 'text-green-600';
+      case 'hydration': return 'text-blue-600';
       default: return 'text-gray-600';
     }
   };
@@ -875,420 +1112,96 @@ case 'reflection': return 'Heart';
       case 'reflection': return 'bg-purple-50/80 border-purple-200';
       case 'education': return 'bg-amber-50/80 border-amber-200';
       case 'activity': return 'bg-green-50/80 border-green-200';
+      case 'photo': return 'bg-pink-50/80 border-pink-200';
+      case 'timer': return 'bg-orange-50/80 border-orange-200';
+      case 'mindfulness': return 'bg-purple-50/80 border-purple-200';
+      case 'nutrition': return 'bg-green-50/80 border-green-200';
+      case 'hydration': return 'bg-blue-50/80 border-blue-200';
       default: return 'bg-white/60 border-gray-200';
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    {/* Header */}
+    <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button 
-            variant="outline" 
-            onClick={onBack}
-            className="p-2"
-          >
-            <ApperIcon name="ArrowLeft" size={20} />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-display font-bold text-gray-900">
-              Día {day}
-            </h1>
-            <p className="text-sm text-gray-600">
-              Plan detallado del día
-            </p>
-          </div>
+            <Button variant="outline" onClick={onBack} className="p-2">
+                <ApperIcon name="ArrowLeft" size={20} />
+            </Button>
+            <div>
+                <h1 className="text-2xl font-display font-bold text-gray-900">Día {day}
+                </h1>
+                <p className="text-sm text-gray-600">Plan detallado del día
+                                </p>
+            </div>
         </div>
-        
         <div className="flex items-center space-x-2">
-          {challenge && (
-            <div className="text-right">
-              <div className="text-sm text-gray-600">Estado</div>
-              <div className={cn(
-                "text-sm font-semibold",
-                day === challenge.currentDay ? "text-secondary" :
-                challenge.completedDays.includes(day) ? "text-success" :
-                day < challenge.currentDay ? "text-error" : "text-gray-400"
-              )}>
-                {day === challenge.currentDay ? "Día actual" :
-                 challenge.completedDays.includes(day) ? "Completado" :
-                 day < challenge.currentDay ? "Sin completar" : "Próximo"}
-              </div>
-            </div>
-          )}
+            {challenge && <div className="text-right">
+                <div className="text-sm text-gray-600">Estado</div>
+                <div
+                    className={cn(
+                        "text-sm font-semibold",
+                        day === challenge.currentDay ? "text-secondary" : challenge.completedDays.includes(day) ? "text-success" : day < challenge.currentDay ? "text-error" : "text-gray-400"
+                    )}>
+                    {day === challenge.currentDay ? "Día actual" : challenge.completedDays.includes(day) ? "Completado" : day < challenge.currentDay ? "Sin completar" : "Próximo"}
+                </div>
+            </div>}
         </div>
-      </div>
-
-      {/* Moments Grid */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {moments.map((moment) => (
-          <Card key={moment.id} className={cn("transition-all duration-200", moment.color)}>
-            <div className="p-4">
-              {/* Moment Header */}
-              <div 
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => toggleMoment(moment.id)}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className={cn("p-2 rounded-lg bg-white/80", moment.iconColor)}>
-                    <ApperIcon name={moment.icon} size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{moment.title}</h3>
-                    <p className="text-sm text-gray-600">{moment.time}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <div className="text-xs bg-white/80 px-2 py-1 rounded-full">
-                    {sampleContent[moment.id]?.filter(item => item.completed).length || 0} / {sampleContent[moment.id]?.length || 0}
-                  </div>
-                  <ApperIcon 
-                    name={expandedMoments[moment.id] ? "ChevronUp" : "ChevronDown"} 
-                    size={20} 
-                    className="text-gray-600"
-                  />
-                </div>
-              </div>
-
-{/* Expandable Content */}
-              {expandedMoments[moment.id] && (
-                <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
-                  {sampleContent[moment.id]?.map((item, index) => {
-                    const isCompleted = item.completed || completedItems.has(item.id);
-                    
-                    const handleCompletion = (responseData = null) => {
-                      if (!isCompleted) {
-                        setCompletedItems(prev => new Set([...prev, item.id]));
-                        
-                        if (responseData) {
-                          if (item.type === 'survey') {
-                            setSurveyResponses(prev => ({...prev, [item.id]: responseData}));
-                          } else if (item.type === 'reflection') {
-                            setReflectionResponses(prev => ({...prev, [item.id]: responseData}));
-                          }
-                        }
-                        
-                        const points = awardPoints.dailyMoment(item.type);
-                        toast.success(`¡Completado! +${points} puntos ✨`, {
-                          position: "top-right",
-                          autoClose: 2500,
-                        });
-                      }
-                    };
-
-                    // Survey Content Type
-                    if (item.type === 'survey') {
-                      return (
-                        <Card key={item.id} className={cn(
-                          "p-4 border transition-all duration-300",
-                          getContentBackground(item.type, isCompleted)
-                        )}>
-                          <div className="flex items-start space-x-3 mb-3">
-                            <ApperIcon 
-                              name={getContentIcon(item.type)} 
-                              size={18} 
-                              className={getContentColor(item.type, isCompleted)}
-                            />
-                            <div className="flex-1">
-                              <h4 className={cn(
-                                "font-medium mb-1",
-                                isCompleted ? "text-gray-500 line-through" : "text-gray-900"
-                              )}>
-                                {item.title}
-                              </h4>
-                              <p className="text-sm text-gray-600 mb-3">{item.question}</p>
-                              
-                              {!isCompleted ? (
-                                <div className="space-y-3">
-                                  <div className="flex justify-between items-center space-x-2">
-                                    {Array.from({ length: item.scale.max }, (_, i) => {
-                                      const value = i + 1;
-                                      const isSelected = surveyResponses[item.id] === value;
-                                      return (
-                                        <button
-                                          key={value}
-                                          onClick={() => setSurveyResponses(prev => ({...prev, [item.id]: value}))}
-                                          className={cn(
-                                            "flex-1 p-2 rounded-lg text-sm font-medium transition-all",
-                                            isSelected 
-                                              ? "bg-blue-600 text-white shadow-md" 
-                                              : "bg-white border border-gray-300 text-gray-700 hover:border-blue-400"
-                                          )}
-                                        >
-                                          {value}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                  <div className="flex justify-between text-xs text-gray-500">
-                                    <span>{item.scale.labels[0]}</span>
-                                    <span>{item.scale.labels[item.scale.labels.length - 1]}</span>
-                                  </div>
-                                  {surveyResponses[item.id] && (
-                                    <Button
-                                      onClick={() => handleCompletion(surveyResponses[item.id])}
-                                      className="w-full mt-3"
-                                      size="sm"
-                                    >
-                                      Confirmar Respuesta
-                                    </Button>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg">
-                                  <span className="text-sm text-gray-600">Respuesta:</span>
-                                  <div className="flex items-center space-x-2">
-                                    <span className="font-bold text-blue-600">{item.response || surveyResponses[item.id]}/5</span>
-                                    <ApperIcon name="Check" size={16} className="text-success" />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    }
-
-                    // Reflection Content Type
-                    if (item.type === 'reflection') {
-                      return (
-                        <Card key={item.id} className={cn(
-                          "p-4 border transition-all duration-300",
-                          getContentBackground(item.type, isCompleted)
-                        )}>
-                          <div className="flex items-start space-x-3 mb-3">
-                            <ApperIcon 
-                              name={getContentIcon(item.type)} 
-                              size={18} 
-                              className={getContentColor(item.type, isCompleted)}
-                            />
-                            <div className="flex-1">
-                              <h4 className={cn(
-                                "font-medium mb-1",
-                                isCompleted ? "text-gray-500 line-through" : "text-gray-900"
-                              )}>
-                                {item.title}
-                              </h4>
-                              <p className="text-sm text-gray-600 mb-3">{item.prompt}</p>
-                              
-                              {!isCompleted ? (
-                                <div className="space-y-3">
-                                  <textarea
-                                    placeholder="Escribe tu reflexión aquí..."
-                                    value={reflectionResponses[item.id] || ''}
-                                    onChange={(e) => setReflectionResponses(prev => ({...prev, [item.id]: e.target.value}))}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                                    rows={3}
-                                  />
-                                  {reflectionResponses[item.id]?.trim() && (
-                                    <Button
-                                      onClick={() => handleCompletion(reflectionResponses[item.id])}
-                                      className="w-full"
-                                      size="sm"
-                                    >
-                                      Guardar Reflexión
-                                    </Button>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="p-3 bg-white/80 rounded-lg">
-                                  <p className="text-sm text-gray-700 italic">
-                                    "{item.response || reflectionResponses[item.id]}"
-                                  </p>
-                                  <div className="flex items-center justify-end mt-2">
-                                    <ApperIcon name="Check" size={16} className="text-success" />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    }
-
-                    // Education Content Type
-                    if (item.type === 'education') {
-                      return (
-                        <Card key={item.id} className={cn(
-                          "overflow-hidden border transition-all duration-300",
-                          getContentBackground(item.type, isCompleted)
-                        )}>
-                          {item.image && (
-                            <div className="relative h-32 bg-gray-200">
-                              <img 
-                                src={item.image} 
-                                alt={item.title}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  e.target.nextSibling.style.display = 'flex';
-                                }}
-                              />
-                              <div className="absolute inset-0 bg-amber-100 flex items-center justify-center" style={{display: 'none'}}>
-                                <ApperIcon name="BookOpen" size={32} className="text-amber-600" />
-                              </div>
-                            </div>
-                          )}
-                          <div className="p-4">
-                            <div className="flex items-start space-x-3">
-                              <ApperIcon 
-                                name={getContentIcon(item.type)} 
-                                size={18} 
-                                className={getContentColor(item.type, isCompleted)}
-                              />
-                              <div className="flex-1">
-                                <h4 className={cn(
-                                  "font-medium mb-2",
-                                  isCompleted ? "text-gray-500 line-through" : "text-gray-900"
-                                )}>
-                                  {item.title}
-                                </h4>
-                                <p className="text-sm text-gray-700 mb-4">{item.content}</p>
-                                
-                                {!isCompleted ? (
-                                  <Button
-                                    onClick={() => handleCompletion()}
-                                    className="w-full"
-                                    size="sm"
-                                    variant="outline"
-                                  >
-                                    Marcar como Leído
-                                  </Button>
-                                ) : (
-                                  <div className="flex items-center justify-center p-2 bg-white/80 rounded-lg">
-                                    <span className="text-sm text-gray-600 mr-2">Completado</span>
-                                    <ApperIcon name="Check" size={16} className="text-success" />
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    }
-
-                    // Activity Content Type
-                    return (
-                      <Card key={item.id} className={cn(
-                        "p-4 border transition-all duration-300",
-                        getContentBackground(item.type, isCompleted)
-                      )}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-start space-x-3 flex-1">
-                            <ApperIcon 
-                              name={getContentIcon(item.type)} 
-                              size={18} 
-                              className={getContentColor(item.type, isCompleted)}
-                            />
-                            <div className="flex-1">
-                              <h4 className={cn(
-                                "font-medium mb-1",
-                                isCompleted ? "text-gray-500 line-through" : "text-gray-900"
-                              )}>
-                                {item.title}
-                              </h4>
-                              <p className="text-sm text-gray-600">{item.description}</p>
-                            </div>
-                          </div>
-                          
-                          {!isCompleted ? (
-                            <Button
-                              onClick={() => handleCompletion()}
-                              size="sm"
-                              className="ml-4"
-                            >
-                              Completar
-                            </Button>
-                          ) : (
-                            <div className="flex items-center space-x-2 ml-4">
-                              <span className="text-sm text-gray-600">Completado</span>
-                              <ApperIcon name="Check" size={16} className="text-success" />
-                            </div>
-                          )}
-                        </div>
-                      </Card>
-                    );
-                  }) || (
-                    <div className="text-center py-6 text-gray-500">
-                      <ApperIcon name="Calendar" size={24} className="mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No hay contenido programado para este momento</p>
-                    </div>
-                  )}
-                  
-                  {/* Add Content Button */}
-                  <Button 
-                    variant="outline" 
-                    className="w-full mt-3 bg-white/80 hover:bg-white"
-                  >
-                    <ApperIcon name="Plus" size={16} className="mr-2" />
-                    Agregar contenido
-                  </Button>
-                </div>
-              )}
-            </div>
-          </Card>
-        ))}
-      </div>
-
-{/* Day Summary */}
-      <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
-        <div className="p-6">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
-            <ApperIcon name="BarChart3" size={20} className="mr-2 text-primary" />
-            Resumen del Día
-          </h3>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {moments.map((moment) => {
-              const total = sampleContent[moment.id]?.length || 0;
-              const completed = sampleContent[moment.id]?.filter(item => item.completed).length || 0;
-              const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-              
-              return (
-                <div key={moment.id} className="text-center">
-                  <div className={cn("p-3 rounded-lg bg-white/80 mb-2", moment.iconColor)}>
-                    <ApperIcon name={moment.icon} size={24} className="mx-auto" />
-                  </div>
-                  <h4 className="text-sm font-medium text-gray-900">{moment.title}</h4>
-                  <p className="text-xs text-gray-600">{percentage}% completado</p>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-                    <div 
-                      className="bg-primary h-1.5 rounded-full transition-all duration-300"
-                      style={{ width: `${percentage}%` }}
-                    ></div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Day 21 Special Completion Button */}
-          {day === 21 && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <div className="text-center">
-                <div className="bg-gradient-to-r from-green-100 to-blue-100 rounded-lg p-4 mb-4">
-                  <ApperIcon name="Trophy" size={32} className="mx-auto mb-2 text-primary" />
-                  <h4 className="font-semibold text-gray-900 mb-1">¡Último Día del Reto!</h4>
-                  <p className="text-sm text-gray-600">
-                    Completa tu evaluación final y descubre tu transformación
-                  </p>
-                </div>
-                <Button 
-                  onClick={() => setShowCompletionFlow(true)}
-                  className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold px-8 py-3"
-                  size="lg"
-                >
-                  <ApperIcon name="Star" size={20} className="mr-2" />
-                  Completar Reto de 21 Días
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </Card>
     </div>
+    {/* Moments Grid */}
+    {/* Day Summary */}
+    <Card
+        className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
+        <div className="p-6">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
+                <ApperIcon name="BarChart3" size={20} className="mr-2 text-primary" />Resumen del Día
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {moments.map(moment => {
+                        const dayContent = getDayContent(day);
+                        const total = dayContent[moment.id]?.length || 0;
+                        const completed = dayContent[moment.id]?.filter(item => item.completed).length || 0;
+                        const percentage = total > 0 ? Math.round(completed / total * 100) : 0;
+
+                        return (
+                            <div key={moment.id} className="text-center">
+                                <div className={cn("p-3 rounded-lg bg-white/80 mb-2", moment.iconColor)}>
+                                    <ApperIcon name={moment.icon} size={24} className="mx-auto" />
+                                </div>
+                                <h4 className="text-sm font-medium text-gray-900">{moment.title}</h4>
+                                <p className="text-xs text-gray-600">{percentage}% completado</p>
+                                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                                    <div
+                                        className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                                        style={{
+                                            width: `${percentage}%`
+                                        }}></div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                {/* Day 21 Special Completion Button */}
+                {day === 21 && <div className="mt-6 pt-6 border-t border-gray-200">
+                    <div className="text-center">
+                        <div
+                            className="bg-gradient-to-r from-green-100 to-blue-100 rounded-lg p-4 mb-4">
+                            <ApperIcon name="Trophy" size={32} className="mx-auto mb-2 text-primary" />
+                            <h4 className="font-semibold text-gray-900 mb-1">¡Último Día del Reto!</h4>
+                            <p className="text-sm text-gray-600">Completa tu evaluación final y descubre tu transformación
+                                                  </p>
+                        </div>
+                        <Button
+                            onClick={() => setShowCompletionFlow(true)}
+                            className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold px-8 py-3"
+                            size="lg">
+                            <ApperIcon name="Star" size={20} className="mr-2" />Completar Reto de 21 Días
+                                            </Button>
+                    </div>
+                </div>}
+            </h3></div>
+    </Card>
+</div>
   );
 }
 
