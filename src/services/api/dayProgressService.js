@@ -87,17 +87,28 @@ async update(id, progressData) {
     return { ...this.dayProgress[index] };
   }
 
-  async getWeeklyComparison() {
+async getWeeklyComparison() {
     await new Promise(resolve => setTimeout(resolve, 200));
     
-    // Generate sample weekly comparison data
-    const currentWeek = [4, 5, 3, 6, 4, 5, 6]; // Habits completed each day
-    const previousWeek = [3, 4, 5, 4, 6, 3, 5];
+    // Generate realistic weekly comparison data
+    const generateWeekData = (baseRate = 5) => {
+      return Array.from({ length: 7 }, (_, i) => {
+        // Weekend patterns (Sat=5, Sun=6)
+        const isWeekend = i >= 5;
+        const weekendBonus = isWeekend ? Math.floor(Math.random() * 2) : 0;
+        const dailyVariation = Math.floor(Math.random() * 3) - 1; // -1 to 1
+        
+        return Math.max(2, Math.min(8, baseRate + weekendBonus + dailyVariation));
+      });
+    };
     
-    const improvement = Math.round(
-      ((currentWeek.reduce((a, b) => a + b, 0) / currentWeek.length) / 
-       (previousWeek.reduce((a, b) => a + b, 0) / previousWeek.length) - 1) * 100
-    );
+    const currentWeek = generateWeekData(5);
+    const previousWeek = generateWeekData(4.5);
+    
+    const currentAvg = currentWeek.reduce((a, b) => a + b, 0) / currentWeek.length;
+    const previousAvg = previousWeek.reduce((a, b) => a + b, 0) / previousWeek.length;
+    
+    const improvement = Math.round(((currentAvg / previousAvg) - 1) * 100);
 
     return {
       currentWeek,

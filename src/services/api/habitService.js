@@ -124,7 +124,7 @@ getStreakMilestones(streakDays) {
     return milestones.includes(streakDays);
   }
 
-  async getCompletionTrends(timeRange = '7days') {
+async getCompletionTrends(timeRange = '7days') {
     await new Promise(resolve => setTimeout(resolve, 300));
     
     const days = timeRange === '7days' ? 7 : timeRange === '14days' ? 14 : 21;
@@ -135,15 +135,29 @@ getStreakMilestones(streakDays) {
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      dates.push(date.toISOString().split('T')[0]);
+      dates.push(date.toLocaleDateString('es-ES', { 
+        month: 'short', 
+        day: 'numeric' 
+      }));
     }
 
-    // Generate sample trend data
+    // Generate sample trend data with realistic patterns
     const categories = this.getCategories();
-    const series = categories.map(category => ({
-      name: category.name,
-      data: dates.map(() => Math.floor(Math.random() * 40) + 60) // Random between 60-100%
-    }));
+    const series = categories.map((category, index) => {
+      const baseRate = 70 + (index * 5); // Different starting points
+      const data = dates.map((_, dayIndex) => {
+        // Create realistic trends with some randomness
+        const trendFactor = Math.sin(dayIndex * 0.3) * 10;
+        const randomFactor = (Math.random() - 0.5) * 15;
+        const value = Math.max(40, Math.min(100, baseRate + trendFactor + randomFactor));
+        return Math.round(value);
+      });
+      
+      return {
+        name: category.name,
+        data
+      };
+    });
 
     return {
       dates,
@@ -151,18 +165,30 @@ getStreakMilestones(streakDays) {
     };
   }
 
-  async getWeeklyStats() {
+async getWeeklyStats() {
     await new Promise(resolve => setTimeout(resolve, 200));
     
     const completedHabits = this.habits.filter(h => h.isCompletedToday).length;
     const totalHabits = this.habits.length;
+    const completionRate = totalHabits > 0 ? (completedHabits / totalHabits) : 0;
+    
+    // Generate realistic weekly completion data
+    const completedDays = Math.floor(Math.random() * 3) + 5; // 5-7 days
+    const averageCompletion = Math.round(completionRate * 100);
+    
+    // Find best performing habit (simulate streaks)
+    const bestHabit = this.habits.reduce((best, current) => {
+      const currentStreak = current.streak || Math.floor(Math.random() * 10);
+      const bestStreak = best.streak || 0;
+      return currentStreak > bestStreak ? current : best;
+    }, this.habits[0]);
     
     return {
-      completedDays: 5,
-      averageCompletion: Math.round((completedHabits / totalHabits) * 100),
-      bestHabit: this.habits.find(h => h.isCompletedToday)?.name || "Ejercicio",
-      consistencyLevel: completedHabits >= totalHabits * 0.8 ? "Excelente" : 
-                       completedHabits >= totalHabits * 0.6 ? "Bueno" : "Regular"
+      completedDays,
+      averageCompletion,
+      bestHabit: bestHabit?.name || "Ejercicio",
+      consistencyLevel: averageCompletion >= 80 ? "Excelente" : 
+                       averageCompletion >= 60 ? "Bueno" : "Regular"
     };
   }
 }

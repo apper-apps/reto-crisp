@@ -1,27 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
-import Chart from 'react-apexcharts';
-import { habitService } from '@/services/api/habitService';
-import { challengeService } from '@/services/api/challengeService';
-import { dayProgressService } from '@/services/api/dayProgressService';
-import ApperIcon from '@/components/ApperIcon';
-import Card from '@/components/atoms/Card';
-import Button from '@/components/atoms/Button';
-import Loading from '@/components/ui/Loading';
-import Error from '@/components/ui/Error';
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import Chart from "react-apexcharts";
+import { habitService } from "@/services/api/habitService";
+import { dayProgressService } from "@/services/api/dayProgressService";
+import ApperIcon from "@/components/ApperIcon";
+import Error from "@/components/ui/Error";
+import Loading from "@/components/ui/Loading";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
+import { challengeService } from "@/services/api/challengeService";
 
 function ProgressCharts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [timeRange, setTimeRange] = useState('7days'); // 7days, 14days, 21days
+const [timeRange, setTimeRange] = useState('7days'); // 7days, 14days, 21days
   const [chartData, setChartData] = useState({
     habitTrends: null,
     challengeProgress: null,
     weeklyComparison: null,
     categoryBreakdown: null
   });
-
-  const loadChartData = async () => {
+  const [summaryStats, setSummaryStats] = useState(null);
+const loadChartData = async () => {
     try {
       setLoading(true);
       setError('');
@@ -30,12 +30,14 @@ function ProgressCharts() {
         habitTrends,
         challengeProgress,
         weeklyComparison,
-        habits
+        habits,
+        weeklyStats
       ] = await Promise.all([
         habitService.getCompletionTrends(timeRange),
         challengeService.getProgressTrends(),
         dayProgressService.getWeeklyComparison(),
-        habitService.getAll()
+        habitService.getAll(),
+        habitService.getWeeklyStats()
       ]);
 
       // Process category breakdown
@@ -46,7 +48,7 @@ function ProgressCharts() {
             name: habit.category,
             completed: 0,
             total: 0,
-            color: habit.color
+            color: habit.color || '#6B46C1'
           };
         }
         categories[habit.category].total++;
@@ -62,13 +64,15 @@ function ProgressCharts() {
         categoryBreakdown: Object.values(categories)
       });
 
+      setSummaryStats(weeklyStats);
+
     } catch (err) {
       setError(err.message || 'Error al cargar los datos de progreso');
       toast.error('Error al cargar los gráficos');
     } finally {
       setLoading(false);
     }
-  };
+};
 
   useEffect(() => {
     loadChartData();
@@ -79,27 +83,28 @@ function ProgressCharts() {
     toast.success(`Vista actualizada a ${range === '7days' ? '7 días' : range === '14days' ? '14 días' : '21 días'}`);
   };
 
-  // Chart configurations
   const getHabitTrendsOptions = () => ({
     chart: {
-      type: 'line',
-      height: 350,
-      toolbar: { show: true },
-      animations: { enabled: true }
+      id: 'habit-trends',
+      toolbar: { show: false },
+      zoom: { enabled: false }
     },
-    colors: ['#6B46C1', '#10B981', '#EF4444', '#F59E0B'],
+    colors: ['#6B46C1', '#10B981', '#F59E0B', '#EF4444', '#3B82F6'],
     stroke: {
       curve: 'smooth',
       width: 3
     },
     xaxis: {
       categories: chartData.habitTrends?.dates || [],
-      title: { text: 'Fecha' }
+      labels: {
+        style: { colors: '#6B7280' }
+      }
     },
     yaxis: {
-      title: { text: 'Porcentaje de Completado (%)' },
-      min: 0,
-      max: 100
+      labels: {
+        style: { colors: '#6B7280' },
+        formatter: (val) => `${val}%`
+      }
     },
     tooltip: {
       y: {
@@ -110,23 +115,26 @@ function ProgressCharts() {
       position: 'top'
     },
     grid: {
-      borderColor: '#e0e6ed'
+      borderColor: '#F3F4F6'
     }
   });
 
   const getChallengeProgressOptions = () => ({
     chart: {
-      type: 'area',
-      height: 300,
+      id: 'challenge-progress',
       toolbar: { show: false }
     },
-    colors: ['#6B46C1'],
+    colors: ['#10B981'],
     fill: {
       type: 'gradient',
       gradient: {
-        shadeIntensity: 1,
-        opacityFrom: 0.7,
-        opacityTo: 0.3
+        shade: 'light',
+        type: 'vertical',
+        shadeIntensity: 0.25,
+        gradientToColors: ['#059669'],
+        inverseColors: false,
+        opacityFrom: 0.85,
+        opacityTo: 0.55
       }
     },
     stroke: {
@@ -135,77 +143,89 @@ function ProgressCharts() {
     },
     xaxis: {
       categories: chartData.challengeProgress?.days || [],
-      title: { text: 'Día del Reto' }
+      labels: {
+        style: { colors: '#6B7280' }
+      }
     },
     yaxis: {
-      title: { text: 'Progreso Acumulado (%)' },
-      min: 0,
-      max: 100
+      labels: {
+        style: { colors: '#6B7280' },
+        formatter: (val) => `${val}%`
+      }
     },
     tooltip: {
       y: {
         formatter: (val) => `${val}%`
       }
+    },
+    grid: {
+      borderColor: '#F3F4F6'
     }
   });
 
   const getCategoryBreakdownOptions = () => ({
     chart: {
-      type: 'donut',
-      height: 300
+      id: 'category-breakdown'
     },
-    colors: chartData.categoryBreakdown?.map(cat => cat.color) || [],
+    colors: chartData.categoryBreakdown?.map(cat => cat.color) || ['#6B46C1', '#10B981', '#F59E0B', '#EF4444'],
     labels: chartData.categoryBreakdown?.map(cat => cat.name) || [],
+    legend: {
+      position: 'bottom'
+    },
+    tooltip: {
+      y: {
+        formatter: (val) => `${val} hábitos completados`
+      }
+    },
     plotOptions: {
       pie: {
         donut: {
-          size: '65%',
-          labels: {
-            show: true,
-            total: {
-              show: true,
-              label: 'Total',
-              formatter: () => {
-                const total = chartData.categoryBreakdown?.reduce((sum, cat) => sum + cat.completed, 0) || 0;
-                return `${total} hábitos`;
-              }
-            }
-          }
+          size: '65%'
         }
       }
-    },
-    legend: {
-      position: 'bottom'
     }
   });
 
   const getWeeklyComparisonOptions = () => ({
     chart: {
-      type: 'bar',
-      height: 300,
+      id: 'weekly-comparison',
       toolbar: { show: false }
     },
-    colors: ['#10B981', '#6B46C1'],
-    plotOptions: {
-      bar: {
-        horizontal: false,
-        columnWidth: '55%',
-        borderRadius: 4
-      }
-    },
+    colors: ['#6B46C1', '#9CA3AF'],
     xaxis: {
       categories: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-      title: { text: 'Día de la Semana' }
+      labels: {
+        style: { colors: '#6B7280' }
+      }
     },
     yaxis: {
-      title: { text: 'Hábitos Completados' }
+      labels: {
+        style: { colors: '#6B7280' },
+        formatter: (val) => `${val}`
+      }
+    },
+    tooltip: {
+      y: {
+        formatter: (val) => `${val} hábitos completados`
+      }
     },
     legend: {
       position: 'top'
+    },
+    grid: {
+      borderColor: '#F3F4F6'
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 4,
+        columnWidth: '70%'
+      }
     }
   });
 
-  if (loading) return <Loading />;
+
+
+if (loading) return <Loading />;
   if (error) return <Error message={error} onRetry={loadChartData} />;
 
   return (
@@ -240,7 +260,8 @@ function ProgressCharts() {
         </div>
       </div>
 
-      {/* Charts Grid */}
+{/* Charts Grid */}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Habit Completion Trends */}
         <Card className="p-6">
@@ -363,40 +384,75 @@ function ProgressCharts() {
         </Card>
       </div>
 
-      {/* Summary Stats */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <ApperIcon name="Activity" size={20} className="text-primary" />
-          Resumen de Rendimiento
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="text-center p-4 bg-primary/10 rounded-lg">
-            <div className="text-2xl font-bold text-primary mb-1">
-              {chartData.habitTrends?.averageCompletion || 78}%
-            </div>
-            <div className="text-sm text-gray-600">Promedio de Completado</div>
+      {/* Summary Statistics */}
+      {summaryStats && (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <ApperIcon name="BarChart2" size={24} className="text-primary" />
+            Resumen Semanal
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-primary mb-1">
+                  {summaryStats.completedDays}
+                </div>
+                <div className="text-sm text-gray-600">Días Completados</div>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-success mb-1">
+                  {summaryStats.averageCompletion}%
+                </div>
+                <div className="text-sm text-gray-600">Promedio de Cumplimiento</div>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-warning mb-1">
+                  {summaryStats.bestHabit}
+                </div>
+                <div className="text-sm text-gray-600">Mejor Hábito</div>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-info mb-1">
+                  {summaryStats.consistencyLevel}
+                </div>
+                <div className="text-sm text-gray-600">Nivel de Consistencia</div>
+              </div>
+            </Card>
           </div>
-          <div className="text-center p-4 bg-success/10 rounded-lg">
-            <div className="text-2xl font-bold text-success mb-1">
-              {chartData.challengeProgress?.bestDay || 12}
+
+          {chartData.weeklyComparison && (
+            <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100">
+              <div className="flex items-center gap-2 mb-2">
+                <ApperIcon name="TrendingUp" size={20} className="text-primary" />
+                <h3 className="font-semibold text-gray-900">Mejora Semanal</h3>
+              </div>
+              <p className="text-gray-700">
+                {chartData.weeklyComparison.improvement > 0 ? (
+                  <span className="text-success font-medium">
+                    ¡Excelente! Mejoraste un {chartData.weeklyComparison.improvement}% respecto a la semana anterior
+                  </span>
+                ) : chartData.weeklyComparison.improvement < 0 ? (
+                  <span className="text-warning font-medium">
+                    Bajaste un {Math.abs(chartData.weeklyComparison.improvement)}% respecto a la semana anterior. ¡Puedes mejorar!
+                  </span>
+                ) : (
+                  <span className="text-info font-medium">
+                    Te mantuviste igual que la semana anterior. ¡Sigue así!
+                  </span>
+                )}
+              </p>
             </div>
-            <div className="text-sm text-gray-600">Mejor Día</div>
-          </div>
-          <div className="text-center p-4 bg-warning/10 rounded-lg">
-            <div className="text-2xl font-bold text-warning mb-1">
-              {chartData.categoryBreakdown?.length || 5}
-            </div>
-            <div className="text-sm text-gray-600">Categorías Activas</div>
-          </div>
-          <div className="text-center p-4 bg-info/10 rounded-lg">
-            <div className="text-2xl font-bold text-info mb-1">
-              +{chartData.weeklyComparison?.improvement || 15}%
-            </div>
-            <div className="text-sm text-gray-600">Mejora Semanal</div>
-          </div>
+          )}
         </div>
-      </Card>
-    </div>
+      )}
+
+</div>
   );
 }
 
