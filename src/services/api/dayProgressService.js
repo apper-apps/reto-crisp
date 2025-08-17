@@ -5,14 +5,26 @@ constructor() {
     this.dayProgress = [...dayProgressData];
   }
 
-  async getHistoricalData(days = 7) {
-    await new Promise(resolve => setTimeout(resolve, 250));
-    return this.dayProgress
-      .slice(-days)
-      .map(progress => ({
-        date: progress.date,
-        completion: Math.round((progress.habitsCompleted / progress.totalHabits) * 100)
-      }));
+async getHistoricalData(days = 7) {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 250));
+      
+      // Ensure dayProgress is an array before using slice
+      const progressArray = Array.isArray(this.dayProgress) ? this.dayProgress : [];
+      
+      return progressArray
+        .slice(-days)
+        .map(progress => ({
+          date: progress?.date || new Date().toISOString().split('T')[0],
+          completion: progress?.habitsCompleted && progress?.totalHabits 
+            ? Math.round((progress.habitsCompleted / progress.totalHabits) * 100)
+            : 0
+        }));
+    } catch (error) {
+      console.error('Error getting historical data:', error);
+      // Return safe default array
+      return [];
+    }
   }
 
   async getAll() {
@@ -88,33 +100,47 @@ async update(id, progressData) {
   }
 
 async getWeeklyComparison() {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    // Generate realistic weekly comparison data
-    const generateWeekData = (baseRate = 5) => {
-      return Array.from({ length: 7 }, (_, i) => {
-        // Weekend patterns (Sat=5, Sun=6)
-        const isWeekend = i >= 5;
-        const weekendBonus = isWeekend ? Math.floor(Math.random() * 2) : 0;
-        const dailyVariation = Math.floor(Math.random() * 3) - 1; // -1 to 1
-        
-        return Math.max(2, Math.min(8, baseRate + weekendBonus + dailyVariation));
-      });
-    };
-    
-    const currentWeek = generateWeekData(5);
-    const previousWeek = generateWeekData(4.5);
-    
-    const currentAvg = currentWeek.reduce((a, b) => a + b, 0) / currentWeek.length;
-    const previousAvg = previousWeek.reduce((a, b) => a + b, 0) / previousWeek.length;
-    
-    const improvement = Math.round(((currentAvg / previousAvg) - 1) * 100);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Generate realistic weekly comparison data
+      const generateWeekData = (baseRate = 5) => {
+        return Array.from({ length: 7 }, (_, i) => {
+          // Weekend patterns (Sat=5, Sun=6)
+          const isWeekend = i >= 5;
+          const weekendBonus = isWeekend ? Math.floor(Math.random() * 2) : 0;
+          const dailyVariation = Math.floor(Math.random() * 3) - 1; // -1 to 1
+          
+          return Math.max(2, Math.min(8, baseRate + weekendBonus + dailyVariation));
+        });
+      };
+      
+      const currentWeek = generateWeekData(5);
+const previousWeek = generateWeekData(4.5);
+      
+      // Ensure arrays are valid before calculations
+      const safeCurrentWeek = Array.isArray(currentWeek) ? currentWeek : [];
+      const safePreviousWeek = Array.isArray(previousWeek) ? previousWeek : [];
+      
+      const currentAvg = safeCurrentWeek.length > 0 ? safeCurrentWeek.reduce((a, b) => a + b, 0) / safeCurrentWeek.length : 0;
+      const previousAvg = safePreviousWeek.length > 0 ? safePreviousWeek.reduce((a, b) => a + b, 0) / safePreviousWeek.length : 0;
+      
+      const improvement = previousAvg > 0 ? Math.round(((currentAvg / previousAvg) - 1) * 100) : 0;
 
-    return {
-      currentWeek,
-      previousWeek,
-      improvement
-    };
+      return {
+        currentWeek: safeCurrentWeek,
+        previousWeek: safePreviousWeek,
+        improvement
+      };
+    } catch (error) {
+      console.error('Error getting weekly comparison:', error);
+      // Return safe default structure
+      return {
+        currentWeek: [],
+        previousWeek: [],
+        improvement: 0
+      };
+    }
   }
 
   async delete(id) {
