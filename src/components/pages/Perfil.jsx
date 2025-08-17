@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { useNotifications } from "@/contexts/NotificationContext";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
-
 const Perfil = () => {
+  const { settings, updateSettings, requestPermission, sendTestNotification, getPermissionStatus, isLoading } = useNotifications();
   const [formData, setFormData] = useState({
     name: '',
     birthDate: '',
@@ -15,7 +16,7 @@ const Perfil = () => {
     transformationGoals: ''
   });
   const [age, setAge] = useState(0);
-
+  const [notificationSettings, setNotificationSettings] = useState(settings);
   const calculateAge = (birthDate) => {
     if (!birthDate) return 0;
     const today = new Date();
@@ -69,10 +70,51 @@ const Perfil = () => {
     toast.success("Perfil guardado correctamente");
   };
 
-  const handleSaveSettings = () => {
-    // Save settings functionality
-    toast.success("Configuración guardada correctamente");
+const handleSaveSettings = async () => {
+// Save notification settings functionality
+    try {
+      await updateSettings(notificationSettings);
+      toast.success("Configuración de notificaciones guardada correctamente");
+    } catch (error) {
+      toast.error("Error al guardar la configuración");
+    }
   };
+
+  const handleNotificationToggle = (path, value) => {
+    const newSettings = { ...notificationSettings };
+    const keys = path.split('.');
+    let current = newSettings;
+    
+    for (let i = 0; i < keys.length - 1; i++) {
+      current = current[keys[i]];
+    }
+    current[keys[keys.length - 1]] = value;
+    
+    setNotificationSettings(newSettings);
+  };
+
+  const handleTimeChange = (moment, time) => {
+    setNotificationSettings(prev => ({
+      ...prev,
+      dailyReminders: {
+        ...prev.dailyReminders,
+        [moment]: {
+          ...prev.dailyReminders[moment],
+          time: time
+        }
+      }
+    }));
+  };
+
+  const handleRequestPermissions = async () => {
+    await requestPermission();
+  };
+
+  const handleTestNotification = (type = 'general') => {
+    sendTestNotification(type);
+  };
+
+  const permissionStatus = getPermissionStatus();
 
   return (
     <div className="space-y-6">
@@ -98,33 +140,199 @@ const Perfil = () => {
             </div>
         </Card>
         <div className="lg:col-span-2 space-y-6">
-            <Card className="p-6">
-                <h3
-                    className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <ApperIcon name="Settings" size={20} />Configuración General
-                                </h3>
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div>
-                            <h4 className="font-medium text-gray-900">Notificaciones Diarias</h4>
-                            <p className="text-sm text-gray-600">Recibe recordatorios para completar tus hábitos</p>
-                        </div>
-                        <div className="w-12 h-6 bg-primary rounded-full relative">
-                            <div
-                                className="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"></div>
+<Card className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <ApperIcon name="Bell" size={20} />
+                    Sistema de Notificaciones
+                </h3>
+
+                {/* Permission Status */}
+                {!permissionStatus.supported && (
+                    <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-yellow-800 text-sm">
+                            <ApperIcon name="AlertTriangle" size={16} className="inline mr-2" />
+                            Tu navegador no soporta notificaciones
+                        </p>
+                    </div>
+                )}
+
+                {permissionStatus.supported && permissionStatus.needsPermission && (
+                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-blue-800 font-medium text-sm">Habilitar Notificaciones</p>
+                                <p className="text-blue-600 text-sm">Permite recibir recordatorios y alertas</p>
+                            </div>
+                            <Button
+                                onClick={handleRequestPermissions}
+                                disabled={isLoading}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2"
+                            >
+                                {isLoading ? 'Habilitando...' : 'Habilitar'}
+                            </Button>
                         </div>
                     </div>
+                )}
+
+                <div className="space-y-6">
+                    {/* Master Toggle */}
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                         <div>
-                            <h4 className="font-medium text-gray-900">Recordatorio Matutino</h4>
-                            <p className="text-sm text-gray-600">Recibe una motivación al comenzar el día</p>
+                            <h4 className="font-medium text-gray-900">Notificaciones Principales</h4>
+                            <p className="text-sm text-gray-600">Activar/desactivar todas las notificaciones</p>
                         </div>
-                        <div className="w-12 h-6 bg-gray-300 rounded-full relative">
-                            <div
-                                className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 shadow-sm"></div>
-                        </div>
+                        <button
+                            onClick={() => handleNotificationToggle('enabled', !notificationSettings.enabled)}
+                            className={`w-12 h-6 ${notificationSettings.enabled ? 'bg-primary' : 'bg-gray-300'} rounded-full relative transition-colors`}
+                        >
+                            <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${notificationSettings.enabled ? 'right-0.5' : 'left-0.5'} shadow-sm`}></div>
+                        </button>
                     </div>
-                </div></Card>
+
+                    {notificationSettings.enabled && (
+                        <>
+                            {/* Daily Reminders */}
+                            <div className="border border-gray-200 rounded-lg p-4">
+                                <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                    <ApperIcon name="Clock" size={16} />
+                                    Recordatorios Diarios
+                                </h4>
+                                
+                                <div className="space-y-4">
+                                    {Object.entries(notificationSettings.dailyReminders).map(([moment, config]) => {
+                                        const momentLabels = {
+                                            morning: { label: 'Mañana', icon: 'Sunrise', desc: 'Comienza tu día con energía' },
+                                            noon: { label: 'Mediodía', icon: 'Sun', desc: 'Revisa tu progreso' },
+                                            evening: { label: 'Tarde', icon: 'Sunset', desc: 'Completa tus hábitos' },
+                                            night: { label: 'Noche', icon: 'Moon', desc: 'Reflexiona sobre tu día' }
+                                        };
+                                        
+                                        return (
+                                            <div key={moment} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg">
+                                                <div className="flex items-center gap-3">
+                                                    <ApperIcon name={momentLabels[moment].icon} size={16} className="text-gray-500" />
+                                                    <div>
+                                                        <p className="font-medium text-gray-900">{momentLabels[moment].label}</p>
+                                                        <p className="text-sm text-gray-600">{momentLabels[moment].desc}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <input
+                                                        type="time"
+                                                        value={config.time}
+                                                        onChange={(e) => handleTimeChange(moment, e.target.value)}
+                                                        disabled={!config.enabled}
+                                                        className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-gray-100"
+                                                    />
+                                                    <button
+                                                        onClick={() => handleNotificationToggle(`dailyReminders.${moment}.enabled`, !config.enabled)}
+                                                        className={`w-10 h-5 ${config.enabled ? 'bg-primary' : 'bg-gray-300'} rounded-full relative transition-colors`}
+                                                    >
+                                                        <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform ${config.enabled ? 'right-0.5' : 'left-0.5'} shadow-sm`}></div>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Habit Notifications */}
+                            <div className="border border-gray-200 rounded-lg p-4">
+                                <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                    <ApperIcon name="CheckCircle" size={16} />
+                                    Notificaciones de Hábitos
+                                </h4>
+                                
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between p-3 border border-gray-100 rounded-lg">
+                                        <div>
+                                            <p className="font-medium text-gray-900">Hábito Completado</p>
+                                            <p className="text-sm text-gray-600">Notificación al completar un hábito</p>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <label className="flex items-center gap-2 text-sm text-gray-600">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={notificationSettings.habitCompletion.sound}
+                                                    onChange={(e) => handleNotificationToggle('habitCompletion.sound', e.target.checked)}
+                                                    disabled={!notificationSettings.habitCompletion.enabled}
+                                                    className="rounded"
+                                                />
+                                                Sonido
+                                            </label>
+                                            <button
+                                                onClick={() => handleNotificationToggle('habitCompletion.enabled', !notificationSettings.habitCompletion.enabled)}
+                                                className={`w-10 h-5 ${notificationSettings.habitCompletion.enabled ? 'bg-primary' : 'bg-gray-300'} rounded-full relative transition-colors`}
+                                            >
+                                                <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform ${notificationSettings.habitCompletion.enabled ? 'right-0.5' : 'left-0.5'} shadow-sm`}></div>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between p-3 border border-gray-100 rounded-lg">
+                                        <div>
+                                            <p className="font-medium text-gray-900">Rachas Especiales</p>
+                                            <p className="text-sm text-gray-600">Celebra tus rachas de 3, 7, 14 y 21 días</p>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <label className="flex items-center gap-2 text-sm text-gray-600">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={notificationSettings.streakMilestones.sound}
+                                                    onChange={(e) => handleNotificationToggle('streakMilestones.sound', e.target.checked)}
+                                                    disabled={!notificationSettings.streakMilestones.enabled}
+                                                    className="rounded"
+                                                />
+                                                Sonido
+                                            </label>
+                                            <button
+                                                onClick={() => handleNotificationToggle('streakMilestones.enabled', !notificationSettings.streakMilestones.enabled)}
+                                                className={`w-10 h-5 ${notificationSettings.streakMilestones.enabled ? 'bg-primary' : 'bg-gray-300'} rounded-full relative transition-colors`}
+                                            >
+                                                <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform ${notificationSettings.streakMilestones.enabled ? 'right-0.5' : 'left-0.5'} shadow-sm`}></div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Test Notifications */}
+                            {permissionStatus.canSend && (
+                                <div className="border border-gray-200 rounded-lg p-4">
+                                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                                        <ApperIcon name="TestTube" size={16} />
+                                        Probar Notificaciones
+                                    </h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        <Button
+                                            onClick={() => handleTestNotification('general')}
+                                            variant="outline"
+                                            className="text-sm"
+                                        >
+                                            General
+                                        </Button>
+                                        <Button
+                                            onClick={() => handleTestNotification('habit')}
+                                            variant="outline" 
+                                            className="text-sm"
+                                        >
+                                            Hábito
+                                        </Button>
+                                        <Button
+                                            onClick={() => handleTestNotification('reminder')}
+                                            variant="outline"
+                                            className="text-sm"
+                                        >
+                                            Recordatorio
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+            </Card>
             {/* Personal Information Form */}
             <Card className="p-6">
                 <h3

@@ -2,9 +2,9 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { pointsService } from "@/services/api/pointsService";
 import Error from "@/components/ui/Error";
 import { toast } from "react-toastify";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 const PointsContext = createContext();
-
 export const usePoints = () => {
   const context = useContext(PointsContext);
   if (!context) {
@@ -108,4 +108,44 @@ const value = {
       {children}
     </PointsContext.Provider>
   );
+};
+
+// Enhanced PointsProvider with notification integration
+export const EnhancedPointsProvider = ({ children }) => {
+  const notifications = useNotifications();
+  
+  return (
+    <PointsProvider>
+      <NotificationIntegrator />
+      {children}
+    </PointsProvider>
+  );
+};
+
+// Component to integrate notifications with points system
+const NotificationIntegrator = () => {
+  const { awardPoints } = usePoints();
+  const { scheduleHabitNotification, scheduleStreakNotification } = useNotifications();
+
+  useEffect(() => {
+    // Override habit completion to include notifications
+    const originalHabitCompletion = awardPoints.habitCompletion;
+    awardPoints.habitCompletion = (habitName) => {
+      const points = originalHabitCompletion(habitName);
+      scheduleHabitNotification(habitName);
+      return points;
+    };
+
+    // Override streak milestone to include notifications  
+    const originalStreakMilestone = awardPoints.streakMilestone;
+    awardPoints.streakMilestone = (streakDays, habitName) => {
+      const points = originalStreakMilestone(streakDays, habitName);
+      if (points > 0) {
+        scheduleStreakNotification(streakDays, habitName);
+      }
+      return points;
+    };
+  }, [scheduleHabitNotification, scheduleStreakNotification]);
+
+  return null;
 };
