@@ -394,7 +394,7 @@ return (
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de Nacimiento
                                             </label>
-                        <div className="relative">
+<div className="relative">
                             <input
                                 type="date"
                                 name="birthDate"
@@ -402,11 +402,10 @@ return (
                                 onChange={handleInputChange}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
                             {age > 0 && <div className="absolute right-3 top-2 text-sm text-gray-500">
-                                {age}años
-                                                    </div>}
+                                {age} años
+                            </div>}
                         </div>
                     </div>
-                    {/* Phone */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Número de Teléfono
                                             </label>
