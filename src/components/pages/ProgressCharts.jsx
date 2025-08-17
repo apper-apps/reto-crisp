@@ -355,10 +355,11 @@ function ProgressCharts() {
           ) : (
             <div className="h-[350px] flex items-center justify-center">
               <Loading message="Cargando tendencias..." />
-            </div>
+</div>
           )}
+        </Card>
 
-{/* Challenge Progress Chart */}
+        {/* Challenge Progress Chart */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <ApperIcon name="Target" className="w-5 h-5 text-secondary" />
