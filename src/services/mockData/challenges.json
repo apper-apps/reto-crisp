@@ -1,0 +1,18 @@
+[
+  {
+    "Id": 1,
+    "name": "Reto Transformación Primavera 2024",
+    "startDate": "2024-03-01",
+    "currentDay": 5,
+    "completedDays": [1, 2, 3, 4],
+    "isActive": true
+  },
+  {
+    "Id": 2,
+    "name": "Reto Bienestar Integral",
+    "startDate": "2024-02-01",
+    "currentDay": 21,
+    "completedDays": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
+    "isActive": false
+  }
+]

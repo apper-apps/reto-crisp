@@ -1,0 +1,79 @@
+import dayProgressData from "@/services/mockData/dayProgress.json";
+
+class DayProgressService {
+  constructor() {
+    this.dayProgress = [...dayProgressData];
+  }
+
+  async getAll() {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return [...this.dayProgress];
+  }
+
+  async getById(id) {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const progress = this.dayProgress.find(p => p.Id === id);
+    if (!progress) {
+      throw new Error(`Progreso con ID ${id} no encontrado`);
+    }
+    return { ...progress };
+  }
+
+  async getByDay(day) {
+    await new Promise(resolve => setTimeout(resolve, 250));
+    const progress = this.dayProgress.find(p => p.day === day);
+    if (!progress) {
+      throw new Error(`Progreso para el día ${day} no encontrado`);
+    }
+    return { ...progress };
+  }
+
+  async getToday() {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const today = new Date().toISOString().split('T')[0];
+    let progress = this.dayProgress.find(p => p.date === today);
+    
+    if (!progress) {
+      // Return current day progress (day 5 for demo)
+      progress = this.dayProgress.find(p => p.day === 5);
+    }
+    
+    return progress ? { ...progress } : null;
+  }
+
+  async create(progressData) {
+    await new Promise(resolve => setTimeout(resolve, 400));
+    const maxId = Math.max(...this.dayProgress.map(p => p.Id), 0);
+    const newProgress = {
+      Id: maxId + 1,
+      ...progressData
+    };
+    
+    this.dayProgress.push(newProgress);
+    return { ...newProgress };
+  }
+
+  async update(id, progressData) {
+    await new Promise(resolve => setTimeout(resolve, 350));
+    const index = this.dayProgress.findIndex(p => p.Id === id);
+    if (index === -1) {
+      throw new Error(`Progreso con ID ${id} no encontrado`);
+    }
+    
+    this.dayProgress[index] = { ...this.dayProgress[index], ...progressData };
+    return { ...this.dayProgress[index] };
+  }
+
+  async delete(id) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const index = this.dayProgress.findIndex(p => p.Id === id);
+    if (index === -1) {
+      throw new Error(`Progreso con ID ${id} no encontrado`);
+    }
+    
+    this.dayProgress.splice(index, 1);
+    return true;
+  }
+}
+
+export const dayProgressService = new DayProgressService();

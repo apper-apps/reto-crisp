@@ -1,0 +1,42 @@
+[
+  {
+    "Id": 1,
+    "day": 5,
+    "date": "2024-03-05",
+    "habitsCompleted": 3,
+    "totalHabits": 6,
+    "isComplete": false
+  },
+  {
+    "Id": 2,
+    "day": 4,
+    "date": "2024-03-04",
+    "habitsCompleted": 4,
+    "totalHabits": 6,
+    "isComplete": true
+  },
+  {
+    "Id": 3,
+    "day": 3,
+    "date": "2024-03-03",
+    "habitsCompleted": 5,
+    "totalHabits": 6,
+    "isComplete": true
+  },
+  {
+    "Id": 4,
+    "day": 2,
+    "date": "2024-03-02",
+    "habitsCompleted": 6,
+    "totalHabits": 6,
+    "isComplete": true
+  },
+  {
+    "Id": 5,
+    "day": 1,
+    "date": "2024-03-01",
+    "habitsCompleted": 5,
+    "totalHabits": 6,
+    "isComplete": true
+  }
+]

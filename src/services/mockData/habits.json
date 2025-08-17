@@ -1,0 +1,44 @@
+[
+  {
+    "Id": 1,
+    "name": "Beber 2 litros de agua",
+    "description": "Mantener una hidratación adecuada durante todo el día",
+    "isCompletedToday": true,
+    "completionDates": ["2024-03-01", "2024-03-02", "2024-03-03", "2024-03-04", "2024-03-05"]
+  },
+  {
+    "Id": 2,
+    "name": "Hacer ejercicio 30 minutos",
+    "description": "Actividad física moderada: caminar, correr o entrenar",
+    "isCompletedToday": false,
+    "completionDates": ["2024-03-01", "2024-03-02", "2024-03-04"]
+  },
+  {
+    "Id": 3,
+    "name": "Meditar 10 minutos",
+    "description": "Práctica de mindfulness y respiración consciente",
+    "isCompletedToday": true,
+    "completionDates": ["2024-03-01", "2024-03-02", "2024-03-03", "2024-03-05"]
+  },
+  {
+    "Id": 4,
+    "name": "Leer 20 páginas",
+    "description": "Lectura de libros de desarrollo personal o ficción",
+    "isCompletedToday": false,
+    "completionDates": ["2024-03-01", "2024-03-03"]
+  },
+  {
+    "Id": 5,
+    "name": "Escribir en diario",
+    "description": "Reflexionar y escribir pensamientos del día",
+    "isCompletedToday": true,
+    "completionDates": ["2024-03-01", "2024-03-02", "2024-03-03", "2024-03-04", "2024-03-05"]
+  },
+  {
+    "Id": 6,
+    "name": "Dormir 8 horas",
+    "description": "Mantener un horario de sueño saludable",
+    "isCompletedToday": false,
+    "completionDates": ["2024-03-01", "2024-03-02", "2024-03-04"]
+  }
+]
