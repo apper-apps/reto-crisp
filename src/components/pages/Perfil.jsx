@@ -56,7 +56,28 @@ const Perfil = () => {
     }
     setAchievementProgress(progressData);
   };
-useEffect(() => {
+// Load achievement progress with cleanup
+  useEffect(() => {
+    let isMounted = true;
+    
+    const loadProgress = async () => {
+      try {
+        await loadAchievementProgress();
+      } catch (error) {
+        console.error('Failed to load achievement progress:', error);
+      }
+    };
+    
+    if (isMounted) {
+      loadProgress();
+    }
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [achievements, isAchievementUnlocked, getAchievementProgress]);
+
+  useEffect(() => {
     if (formData.birthDate) {
       setAge(calculateAge(formData.birthDate));
     }
@@ -368,9 +389,21 @@ return (
                                 </div>
                             )}
                         </>
+</>
                     )}
                 </div>
-            </Card>
+                
+                {/* Save Settings Button */}
+                <div className="flex justify-end mt-6">
+                    <Button
+                        onClick={handleSaveSettings}
+                        disabled={isLoading}
+                        className="px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-colors"
+                    >
+                        <ApperIcon name="Settings" size={16} className="mr-2" />
+                        {isLoading ? 'Guardando...' : 'Guardar Configuración'}
+                    </Button>
+                </div>
             {/* Personal Information Form */}
             <Card className="p-6">
                 <h3
@@ -687,17 +720,15 @@ return (
                   </div>
                 </div>
 </Card>
-            </div>
-          </div>
         </div>
-
-        {/* Badge Unlock Animation */}
-        <BadgeUnlockAnimation
-          achievement={pendingUnlock}
-          isVisible={showUnlockAnimation}
-          onComplete={() => setShowUnlockAnimation(false)}
-        />
       </div>
+
+      {/* Badge Unlock Animation */}
+      <BadgeUnlockAnimation
+        achievement={pendingUnlock}
+        isVisible={showUnlockAnimation}
+        onComplete={() => setShowUnlockAnimation(false)}
+      />
     </div>
   );
 };
