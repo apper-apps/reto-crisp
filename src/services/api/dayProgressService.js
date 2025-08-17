@@ -1,8 +1,18 @@
 import dayProgressData from "@/services/mockData/dayProgress.json";
 
 class DayProgressService {
-  constructor() {
+constructor() {
     this.dayProgress = [...dayProgressData];
+  }
+
+  async getHistoricalData(days = 7) {
+    await new Promise(resolve => setTimeout(resolve, 250));
+    return this.dayProgress
+      .slice(-days)
+      .map(progress => ({
+        date: progress.date,
+        completion: Math.round((progress.habitsCompleted / progress.totalHabits) * 100)
+      }));
   }
 
   async getAll() {
@@ -75,6 +85,25 @@ async update(id, progressData) {
       updatedAt: new Date().toISOString()
     };
     return { ...this.dayProgress[index] };
+  }
+
+  async getWeeklyComparison() {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // Generate sample weekly comparison data
+    const currentWeek = [4, 5, 3, 6, 4, 5, 6]; // Habits completed each day
+    const previousWeek = [3, 4, 5, 4, 6, 3, 5];
+    
+    const improvement = Math.round(
+      ((currentWeek.reduce((a, b) => a + b, 0) / currentWeek.length) / 
+       (previousWeek.reduce((a, b) => a + b, 0) / previousWeek.length) - 1) * 100
+    );
+
+    return {
+      currentWeek,
+      previousWeek,
+      improvement
+    };
   }
 
   async delete(id) {

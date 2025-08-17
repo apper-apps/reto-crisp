@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { challengeService } from "@/services/api/challengeService";
 import { habitService } from "@/services/api/habitService";
@@ -12,10 +13,11 @@ import ChallengeProgress from "@/components/organisms/ChallengeProgress";
 
 const Dashboard = () => {
   const { awardPoints } = usePoints();
-  const [challenge, setChallenge] = useState(null);
+const [challenge, setChallenge] = useState(null);
   const [dayProgress, setDayProgress] = useState(null);
   const [habits, setHabits] = useState([]);
   const [miniChallenges, setMiniChallenges] = useState([]);
+  const [weeklyStats, setWeeklyStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -102,15 +104,17 @@ const loadDashboardData = async () => {
       setLoading(true);
       setError("");
       
-      const [challengeData, habitsData, dayProgressData] = await Promise.all([
+      const [challengeData, habitsData, dayProgressData, weeklyData] = await Promise.all([
         challengeService.getActive(),
         habitService.getAll(),
-        dayProgressService.getToday()
+        dayProgressService.getToday(),
+        habitService.getWeeklyStats()
       ]);
       
       setChallenge(challengeData);
       setHabits(habitsData);
       setDayProgress(dayProgressData);
+      setWeeklyStats(weeklyData);
 
       // Award streak bonus if applicable
       if (challengeData && dayProgressData) {
@@ -341,96 +345,127 @@ const completedHabitsToday = habits.filter(h => h.isCompletedToday).length;
         />
       </div>
 
-      {/* Additional Progress Insights */}
+{/* Progress Charts Preview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+        <Link to="/progreso" className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 group">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-gray-900">Días Restantes</h3>
-            <ApperIcon name="Target" size={20} className="text-blue-500" />
+            <h3 className="font-semibold text-gray-900">Tendencias</h3>
+            <ApperIcon name="TrendingUp" size={20} className="text-blue-500 group-hover:text-blue-600 transition-colors" />
           </div>
           <div className="text-2xl font-bold text-gray-900 mb-1">
-            {totalDays - currentDay + 1}
+            {weeklyStats ? `${weeklyStats.averageCompletion}%` : "85%"}
           </div>
           <p className="text-sm text-gray-600">
-            para completar el reto
+            promedio semanal
           </p>
-        </div>
+          <div className="mt-3 flex items-center text-sm text-blue-600">
+            <span>Ver gráficos detallados</span>
+            <ApperIcon name="ArrowRight" size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
 
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+        <Link to="/progreso" className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 group">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-gray-900">Efectividad</h3>
-            <ApperIcon name="BarChart3" size={20} className="text-green-500" />
+            <h3 className="font-semibold text-gray-900">Progreso</h3>
+            <ApperIcon name="BarChart3" size={20} className="text-green-500 group-hover:text-green-600 transition-colors" />
           </div>
           <div className="text-2xl font-bold text-gray-900 mb-1">
             {Math.round((completedDays / Math.max(currentDay - 1, 1)) * 100)}%
           </div>
           <p className="text-sm text-gray-600">
-            de días completados
+            efectividad del reto
           </p>
-        </div>
+          <div className="mt-3 flex items-center text-sm text-green-600">
+            <span>Ver análisis completo</span>
+            <ApperIcon name="ArrowRight" size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
 
-        <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+        <Link to="/progreso" className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 group">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-gray-900">Mejor Racha</h3>
-            <ApperIcon name="Award" size={20} className="text-yellow-500" />
+            <h3 className="font-semibold text-gray-900">Comparación</h3>
+            <ApperIcon name="Activity" size={20} className="text-purple-500 group-hover:text-purple-600 transition-colors" />
           </div>
           <div className="text-2xl font-bold text-gray-900 mb-1">
-            {Math.max(currentStreak, challenge.completedDays.length > 0 ? 1 : 0)}
+            {currentStreak}
           </div>
           <p className="text-sm text-gray-600">
             días consecutivos
           </p>
-        </div>
+          <div className="mt-3 flex items-center text-sm text-purple-600">
+            <span>Ver comparativas</span>
+            <ApperIcon name="ArrowRight" size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Resumen Semanal
-          </h3>
+<div className="bg-white rounded-xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Resumen Semanal
+            </h3>
+            <Link to="/progreso" className="text-sm text-primary hover:text-primary/80 transition-colors">
+              Ver detalles
+            </Link>
+          </div>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Días completados esta semana</span>
               <span className="font-semibold text-primary">
-                {Math.min(7, challenge.completedDays.length)}
+                {weeklyStats ? weeklyStats.completedDays : Math.min(7, challenge.completedDays.length)}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Hábitos más exitosos</span>
-              <span className="font-semibold text-success">80%</span>
+              <span className="text-gray-600">Mejor hábito</span>
+              <span className="font-semibold text-success">
+                {weeklyStats ? weeklyStats.bestHabit : "Ejercicio"}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Consistencia</span>
-              <span className="font-semibold text-primary">Excelente</span>
+              <span className="font-semibold text-primary">
+                {weeklyStats ? weeklyStats.consistencyLevel : "Excelente"}
+              </span>
             </div>
           </div>
         </div>
 
         <div className="bg-white rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Próximos Pasos
-          </h3>
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
-              <span className="text-gray-600 text-sm">
-                Completa los hábitos restantes de hoy
-              </span>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Vista Rápida
+            </h3>
+            <Link to="/progreso" className="text-sm text-primary hover:text-primary/80 transition-colors">
+              Ver gráficos
+            </Link>
+          </div>
+          <div className="space-y-4">
+            {/* Mini progress chart preview */}
+            <div className="h-20 bg-gradient-to-r from-primary/10 to-success/10 rounded-lg p-3 flex items-end justify-between">
+              <div className="flex items-end gap-1">
+                {[65, 78, 45, 89, 92, 76, 88].map((height, index) => (
+                  <div 
+                    key={index}
+                    className="bg-primary/60 rounded-sm transition-all duration-300 hover:bg-primary"
+                    style={{ 
+                      height: `${height * 0.6}%`, 
+                      width: '8px',
+                      minHeight: '8px'
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="text-xs text-gray-600 font-medium">
+                Esta semana
+              </div>
             </div>
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
-              <span className="text-gray-600 text-sm">
-                Mantén tu racha de días consecutivos
-              </span>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
-              <span className="text-gray-600 text-sm">
-                Revisa tu progreso al final del día
-              </span>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Progreso general</span>
+              <span className="font-semibold text-success">↑ 12%</span>
             </div>
           </div>
-</div>
+        </div>
       </div>
 
       {/* Mini-Challenges Section */}

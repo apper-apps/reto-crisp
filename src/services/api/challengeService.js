@@ -121,6 +121,32 @@ this.challenges.splice(index, 1);
     
     this.miniChallenges[index] = { ...this.miniChallenges[index], ...updateData };
     return { ...this.miniChallenges[index] };
+}
+
+  async getProgressTrends() {
+    await new Promise(resolve => setTimeout(resolve, 250));
+    
+    const activeChallenge = this.challenges.find(c => c.isActive);
+    if (!activeChallenge) {
+      return null;
+    }
+
+    const days = [];
+    const data = [];
+    
+    for (let i = 1; i <= activeChallenge.currentDay; i++) {
+      days.push(`Día ${i}`);
+      // Calculate cumulative progress percentage
+      const completedByDay = activeChallenge.completedDays.filter(day => day <= i).length;
+      const progressPercent = Math.round((completedByDay / i) * 100);
+      data.push(progressPercent);
+    }
+
+    return {
+      days,
+      data,
+      bestDay: Math.max(...activeChallenge.completedDays)
+    };
   }
 }
 

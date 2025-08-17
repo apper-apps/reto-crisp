@@ -119,9 +119,51 @@ this.habits.splice(index, 1);
     return this.habits;
   }
 
-  getStreakMilestones(streakDays) {
+getStreakMilestones(streakDays) {
     const milestones = [3, 7, 14, 21];
     return milestones.includes(streakDays);
+  }
+
+  async getCompletionTrends(timeRange = '7days') {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const days = timeRange === '7days' ? 7 : timeRange === '14days' ? 14 : 21;
+    const dates = [];
+    const today = new Date();
+    
+    // Generate dates for the range
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      dates.push(date.toISOString().split('T')[0]);
+    }
+
+    // Generate sample trend data
+    const categories = this.getCategories();
+    const series = categories.map(category => ({
+      name: category.name,
+      data: dates.map(() => Math.floor(Math.random() * 40) + 60) // Random between 60-100%
+    }));
+
+    return {
+      dates,
+      series
+    };
+  }
+
+  async getWeeklyStats() {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const completedHabits = this.habits.filter(h => h.isCompletedToday).length;
+    const totalHabits = this.habits.length;
+    
+    return {
+      completedDays: 5,
+      averageCompletion: Math.round((completedHabits / totalHabits) * 100),
+      bestHabit: this.habits.find(h => h.isCompletedToday)?.name || "Ejercicio",
+      consistencyLevel: completedHabits >= totalHabits * 0.8 ? "Excelente" : 
+                       completedHabits >= totalHabits * 0.6 ? "Bueno" : "Regular"
+    };
   }
 }
 

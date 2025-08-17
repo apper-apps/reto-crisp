@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
+import ProgressCharts from "@/components/pages/ProgressCharts";
 import { PointsProvider } from "@/contexts/PointsContext";
-import Dashboard from "@/components/pages/Dashboard";
 import Day0Assessment from "@/components/pages/Day0Assessment";
+import Dashboard from "@/components/pages/Dashboard";
 import MiReto from "@/components/pages/MiReto";
 import Habitos from "@/components/pages/Habitos";
 import Perfil from "@/components/pages/Perfil";
@@ -35,14 +36,15 @@ const App = () => {
             
 <main className="flex-1 overflow-auto">
               <div className="p-4 lg:p-6 max-w-7xl mx-auto">
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/dia-0" element={<Day0Assessment />} />
-                  <Route path="/mi-reto" element={<MiReto />} />
-                  <Route path="/habitos" element={<Habitos />} />
-                  <Route path="/perfil" element={<Perfil />} />
-                </Routes>
-              </div>
+<Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/dia-0" element={<Day0Assessment />} />
+            <Route path="/mi-reto" element={<MiReto />} />
+            <Route path="/habitos" element={<Habitos />} />
+            <Route path="/progreso" element={<ProgressCharts />} />
+            <Route path="/perfil" element={<Perfil />} />
+          </Routes>
+        </div>
             </main>
           </div>
           
