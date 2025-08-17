@@ -133,4 +133,3 @@ const HabitsList = ({ habits, onToggleHabit, onAddHabit, className }) => {
 };
 
 export default HabitsList;
-export default HabitsList;
