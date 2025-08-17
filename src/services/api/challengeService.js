@@ -1,9 +1,14 @@
 import challengesData from "@/services/mockData/challenges.json";
 
 class ChallengeService {
-constructor() {
-    this.challenges = [...challengesData];
-    this.miniChallenges = [];
+  constructor() {
+    // Access the challenges array from the JSON object structure
+    this.challenges = Array.isArray(challengesData?.challenges) 
+      ? [...challengesData.challenges] 
+      : [];
+    this.miniChallenges = Array.isArray(challengesData?.miniChallenges) 
+      ? [...challengesData.miniChallenges] 
+      : [];
   }
 
   async getAll() {
