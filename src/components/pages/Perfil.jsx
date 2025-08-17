@@ -1,11 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { useAchievements } from "@/contexts/AchievementContext";
+import AchievementBadge from "@/components/atoms/AchievementBadge";
+import BadgeUnlockAnimation from "@/components/molecules/BadgeUnlockAnimation";
 import { useNotifications } from "@/contexts/NotificationContext";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
+
 const Perfil = () => {
   const { settings, updateSettings, requestPermission, sendTestNotification, getPermissionStatus, isLoading } = useNotifications();
+  const { 
+    achievements, 
+    unlockedAchievements, 
+    pendingUnlock, 
+    totalAchievementPoints,
+    checkAchievements,
+    getAchievementProgress,
+    isAchievementUnlocked 
+  } = useAchievements();
+  
   const [formData, setFormData] = useState({
     name: '',
     birthDate: '',
@@ -17,6 +31,9 @@ const Perfil = () => {
   });
   const [age, setAge] = useState(0);
   const [notificationSettings, setNotificationSettings] = useState(settings);
+  const [achievementProgress, setAchievementProgress] = useState({});
+  const [showUnlockAnimation, setShowUnlockAnimation] = useState(false);
+
   const calculateAge = (birthDate) => {
     if (!birthDate) return 0;
     const today = new Date();
@@ -29,7 +46,17 @@ const Perfil = () => {
     return age;
   };
 
-  useEffect(() => {
+  // Load achievement progress
+  const loadAchievementProgress = async () => {
+    const progressData = {};
+    for (const achievement of achievements) {
+      if (!isAchievementUnlocked(achievement.key)) {
+        progressData[achievement.key] = await getAchievementProgress(achievement.key);
+      }
+    }
+    setAchievementProgress(progressData);
+  };
+useEffect(() => {
     if (formData.birthDate) {
       setAge(calculateAge(formData.birthDate));
     }
@@ -66,12 +93,12 @@ const Perfil = () => {
       return;
     }
     
-// Here you would typically save to a service
+    // Here you would typically save to a service
     toast.success("Perfil guardado correctamente");
   };
 
-const handleSaveSettings = async () => {
-// Save notification settings functionality
+  const handleSaveSettings = async () => {
+    // Save notification settings functionality
     try {
       await updateSettings(notificationSettings);
       toast.success("Configuración de notificaciones guardada correctamente");
@@ -115,6 +142,19 @@ const handleSaveSettings = async () => {
   };
 
   const permissionStatus = getPermissionStatus();
+
+  // Check for new achievements when component mounts
+  useEffect(() => {
+    checkAchievements();
+    loadAchievementProgress();
+  }, []);
+
+  // Show unlock animation when pendingUnlock changes
+  useEffect(() => {
+    if (pendingUnlock) {
+      setShowUnlockAnimation(true);
+    }
+  }, [pendingUnlock]);
 
   return (
     <div className="space-y-6">
@@ -480,56 +520,206 @@ const handleSaveSettings = async () => {
                                 </Button>
             </div>
             <Card className="p-6">
-                <h3
-                    className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <ApperIcon name="Trophy" size={20} />Logros Desbloqueados
-                                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div
-                        className="flex items-center gap-3 p-3 bg-gradient-light rounded-lg text-white">
-                        <ApperIcon name="Flame" size={24} />
-                        <div>
-                            <div className="font-semibold">Primera Semana</div>
-                            <div className="text-xs text-white/80">7 días consecutivos</div>
-                        </div>
+<div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <ApperIcon name="Trophy" size={20} />
+                    Logros y Insignias
+                  </h3>
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1 text-yellow-600">
+                      <ApperIcon name="Star" size={16} />
+                      <span className="font-medium">{totalAchievementPoints} puntos</span>
                     </div>
-                    <div
-                        className="flex items-center gap-3 p-3 bg-gradient-purple-blue rounded-lg text-white">
-                        <ApperIcon name="Target" size={24} />
-                        <div>
-                            <div className="font-semibold">Constancia</div>
-                            <div className="text-xs text-white/80">80% de hábitos diarios</div>
-                        </div>
-                    </div>
-                    <div
-                        className="flex items-center gap-3 p-3 bg-gray-200 rounded-lg text-gray-500">
-                        <ApperIcon name="Star" size={24} />
-                        <div>
-                            <div className="font-semibold">Perfeccionista</div>
-                            <div className="text-xs">100% en un día</div>
-                        </div>
-                    </div>
-                    <div
-                        className="flex items-center gap-3 p-3 bg-gray-200 rounded-lg text-gray-500">
-                        <ApperIcon name="Crown" size={24} />
-                        <div>
-                            <div className="font-semibold">Maestro 21D</div>
-                            <div className="text-xs">Completa el reto</div>
-                        </div>
-                    </div>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-gray-600">
+                      {unlockedAchievements.length} de {achievements.length} desbloqueados
+                    </span>
+                  </div>
                 </div>
-            </Card>
-            <div className="flex gap-3">
-                <Button onClick={handleSaveSettings}>
-                    <ApperIcon name="Save" size={16} className="mr-2" />Guardar Cambios
-                                </Button>
-                <Button variant="secondary">
-                    <ApperIcon name="Download" size={16} className="mr-2" />Exportar Datos
-                                </Button>
+
+                {/* Achievement Categories */}
+                <div className="space-y-6">
+                  {/* Streak Achievements */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <ApperIcon name="Flame" size={16} className="text-orange-500" />
+                      Rachas y Constancia
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {achievements
+                        .filter(a => a.category === 'streak')
+                        .map(achievement => (
+                          <AchievementBadge
+                            key={achievement.key}
+                            achievement={achievement}
+                            isUnlocked={isAchievementUnlocked(achievement.key)}
+                            progress={achievementProgress[achievement.key] || 0}
+                            showProgress={true}
+                            onClick={() => {
+                              if (isAchievementUnlocked(achievement.key)) {
+                                toast.success(`${achievement.name}: ${achievement.description}`);
+                              } else {
+                                toast.info(`Progreso: ${Math.round(achievementProgress[achievement.key] || 0)}%`);
+                              }
+                            }}
+                          />
+                        ))
+                      }
+                    </div>
+                  </div>
+
+                  {/* Daily & Completion Achievements */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <ApperIcon name="Target" size={16} className="text-blue-500" />
+                      Perfección y Finalización
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {achievements
+                        .filter(a => ['daily', 'completion', 'mastery'].includes(a.category))
+                        .map(achievement => (
+                          <AchievementBadge
+                            key={achievement.key}
+                            achievement={achievement}
+                            isUnlocked={isAchievementUnlocked(achievement.key)}
+                            progress={achievementProgress[achievement.key] || 0}
+                            showProgress={true}
+                            onClick={() => {
+                              if (isAchievementUnlocked(achievement.key)) {
+                                toast.success(`${achievement.name}: ${achievement.description}`);
+                              } else {
+                                toast.info(`Progreso: ${Math.round(achievementProgress[achievement.key] || 0)}%`);
+                              }
+                            }}
+                          />
+                        ))
+                      }
+                    </div>
+                  </div>
+
+                  {/* Special & Exploration Achievements */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <ApperIcon name="Compass" size={16} className="text-purple-500" />
+                      Exploración y Especiales
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {achievements
+                        .filter(a => ['consistency', 'exploration'].includes(a.category))
+                        .map(achievement => (
+                          <AchievementBadge
+                            key={achievement.key}
+                            achievement={achievement}
+                            isUnlocked={isAchievementUnlocked(achievement.key)}
+                            progress={achievementProgress[achievement.key] || 0}
+                            showProgress={true}
+                            onClick={() => {
+                              if (isAchievementUnlocked(achievement.key)) {
+                                toast.success(`${achievement.name}: ${achievement.description}`);
+                              } else {
+                                toast.info(`Progreso: ${Math.round(achievementProgress[achievement.key] || 0)}%`);
+                              }
+                            }}
+                          />
+                        ))
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                {/* Achievement Stats Summary */}
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 border border-yellow-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <ApperIcon name="Trophy" size={20} className="text-yellow-600" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">{unlockedAchievements.length}</div>
+                        <div className="text-sm text-gray-600">Logros desbloqueados</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <ApperIcon name="Star" size={20} className="text-blue-600" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">{totalAchievementPoints}</div>
+                        <div className="text-sm text-gray-600">Puntos de logros</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-lg p-4 border border-green-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <ApperIcon name="TrendingUp" size={20} className="text-green-600" />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">
+                          {Math.round((unlockedAchievements.length / achievements.length) * 100)}%
+                        </div>
+                        <div className="text-sm text-gray-600">Progreso total</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Motivational Message */}
+                <div className="mt-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-200">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <ApperIcon name="Sparkles" size={16} className="text-purple-600" />
+                    </div>
+                    <div>
+                      <h5 className="font-semibold text-gray-900 mb-1">¡Sigue así!</h5>
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        {unlockedAchievements.length === 0 
+                          ? "¡Tu primer logro te espera! Completa tus hábitos diarios para comenzar a desbloquear insignias."
+                          : unlockedAchievements.length < 3
+                          ? "¡Excelente comienzo! Mantén tu constancia para desbloquear más logros especiales."
+                          : unlockedAchievements.length < 6
+                          ? "¡Increíble progreso! Estás construyendo hábitos sólidos y coleccionando logros valiosos."
+                          : "¡Eres un maestro de los hábitos! Tu dedicación es inspiradora y tus logros lo demuestran."
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
             </div>
+          </div>
         </div>
+
+        {/* Badge Unlock Animation */}
+        <BadgeUnlockAnimation
+          achievement={pendingUnlock}
+          isVisible={showUnlockAnimation}
+          onComplete={() => setShowUnlockAnimation(false)}
+        />
+      </div>
     </div>
-</div>
+{/* Badge Unlock Animation */}
+        <BadgeUnlockAnimation
+          achievement={pendingUnlock}
+          isVisible={showUnlockAnimation}
+          onComplete={() => setShowUnlockAnimation(false)}
+        />
+
+        {/* Settings Save Button */}
+        <div className="flex gap-3">
+          <Button onClick={handleSaveSettings}>
+            <ApperIcon name="Save" size={16} className="mr-2" />Guardar Cambios
+          </Button>
+          <Button variant="secondary">
+            <ApperIcon name="Download" size={16} className="mr-2" />Exportar Datos
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -56,11 +56,15 @@ class PointsService {
     return this.totalPoints;
   }
 
-  awardHabitCompletion(habitName = 'Habit') {
+awardHabitCompletion(habitName = 'Habit') {
     const points = 10;
     this.totalPoints += points;
     this.savePoints();
     this.addPointsHistory('habit_complete', points, { habitName });
+    
+    // Trigger achievement check
+    this.checkAchievements();
+    
     return points;
   }
 
@@ -79,6 +83,10 @@ class PointsService {
     this.totalPoints += points;
     this.savePoints();
     this.addPointsHistory('streak_bonus', points, { streakDays });
+    
+    // Trigger achievement check for streak milestones
+    this.checkAchievements();
+    
     return points;
   }
 
@@ -89,6 +97,10 @@ class PointsService {
     this.totalPoints += points;
     this.savePoints();
     this.addPointsHistory('perfect_day', points, { habitsCompleted, totalHabits });
+    
+    // Trigger achievement check for perfect day
+    this.checkAchievements();
+    
     return points;
   }
 
@@ -97,7 +109,11 @@ class PointsService {
     this.totalPoints += points;
     this.savePoints();
     this.addPointsHistory('challenge_progress', points, { day });
-return points;
+    
+    // Trigger achievement check for challenge progress
+    this.checkAchievements();
+    
+    return points;
   }
 
   awardMiniChallengeCompletion(challengeName, challengePoints = 25) {
@@ -122,7 +138,7 @@ return points;
       day, 
       totalDays 
     });
-return points;
+    return points;
   }
 
   awardChallengeCompletion(challengeName = "Reto 21 días", totalPoints = 500) {
@@ -134,11 +150,22 @@ return points;
       specialAchievement: true
     });
     
+    // Trigger achievement check for challenge completion
+    this.checkAchievements();
+    
     return {
       points: totalPoints,
       message: `¡Felicitaciones! Has completado ${challengeName}`,
       celebration: 'massive_confetti'
     };
+  }
+
+  // Achievement integration
+  checkAchievements() {
+    // This will be called by the achievement context
+    if (window.achievementContext) {
+      window.achievementContext.checkAchievements();
+    }
   }
 }
 
