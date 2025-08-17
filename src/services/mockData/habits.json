@@ -3,6 +3,14 @@
     "Id": 1,
     "name": "Beber 8 vasos de agua",
     "description": "Mantener una hidratación óptima bebiendo 8 vasos de agua durante el día",
+    "category": "Salud",
+    "icon": "Droplets",
+    "color": "#10B981",
+    "goal": {
+      "current": 6,
+      "target": 8,
+      "unit": "vasos"
+    },
     "isCompletedToday": false,
     "completionDates": ["2024-03-01", "2024-03-02", "2024-03-03"]
   },
@@ -10,6 +18,14 @@
     "Id": 2,
     "name": "30 minutos de ejercicio",
     "description": "Realizar actividad física durante 30 minutos para mantener un estilo de vida saludable",
+    "category": "Ejercicio",
+    "icon": "Activity",
+    "color": "#EF4444",
+    "goal": {
+      "current": 30,
+      "target": 30,
+      "unit": "minutos"
+    },
     "isCompletedToday": true,
     "completionDates": ["2024-03-01", "2024-03-02", "2024-03-04", "2024-03-05"]
   },
@@ -17,7 +33,60 @@
     "Id": 3,
     "name": "7+ horas de sueño",
     "description": "Dormir al menos 7 horas para una recuperación adecuada y mejor rendimiento",
+    "category": "Salud",
+    "icon": "Moon",
+    "color": "#10B981",
+    "goal": {
+      "current": 7,
+      "target": 8,
+      "unit": "horas"
+    },
     "isCompletedToday": false,
     "completionDates": ["2024-03-01", "2024-03-03", "2024-03-04"]
+  },
+  {
+    "Id": 4,
+    "name": "Comer 5 porciones de frutas/verduras",
+    "description": "Incluir al menos 5 porciones de frutas y verduras en la alimentación diaria",
+    "category": "Alimentación",
+    "icon": "Apple",
+    "color": "#F59E0B",
+    "goal": {
+      "current": 3,
+      "target": 5,
+      "unit": "porciones"
+    },
+    "isCompletedToday": false,
+    "completionDates": ["2024-03-01", "2024-03-03"]
+  },
+  {
+    "Id": 5,
+    "name": "10 minutos de meditación",
+    "description": "Practicar mindfulness y meditación para mejorar el bienestar mental",
+    "category": "Mental",
+    "icon": "Brain",
+    "color": "#8B5CF6",
+    "goal": {
+      "current": 10,
+      "target": 15,
+      "unit": "minutos"
+    },
+    "isCompletedToday": true,
+    "completionDates": ["2024-03-02", "2024-03-04", "2024-03-05"]
+  },
+  {
+    "Id": 6,
+    "name": "Leer 30 minutos",
+    "description": "Dedicar tiempo a la lectura para el crecimiento personal y profesional",
+    "category": "Productividad",
+    "icon": "BookOpen",
+    "color": "#3B82F6",
+    "goal": {
+      "current": 25,
+      "target": 30,
+      "unit": "minutos"
+    },
+    "isCompletedToday": false,
+    "completionDates": ["2024-03-01", "2024-03-02", "2024-03-04"]
   }
 ]

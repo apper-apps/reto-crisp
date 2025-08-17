@@ -19,12 +19,13 @@ class HabitService {
     return { ...habit };
   }
 
-  async create(habitData) {
+async create(habitData) {
     await new Promise(resolve => setTimeout(resolve, 400));
     const maxId = Math.max(...this.habits.map(h => h.Id), 0);
     const newHabit = {
       Id: maxId + 1,
       ...habitData,
+      goal: habitData.goal || { current: 0, target: 1, unit: "vez" },
       isCompletedToday: false,
       completionDates: []
     };
@@ -44,6 +45,15 @@ async update(id, habitData) {
     return { ...this.habits[index] };
   }
 
+  getCategories() {
+    return [
+      { name: "Salud", icon: "Heart", color: "#10B981" },
+      { name: "Ejercicio", icon: "Activity", color: "#EF4444" },
+      { name: "Alimentación", icon: "Apple", color: "#F59E0B" },
+      { name: "Mental", icon: "Brain", color: "#8B5CF6" },
+      { name: "Productividad", icon: "Target", color: "#3B82F6" }
+    ];
+  }
   async delete(id) {
     await new Promise(resolve => setTimeout(resolve, 300));
     const index = this.habits.findIndex(h => h.Id === id);
