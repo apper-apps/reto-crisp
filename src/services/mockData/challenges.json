@@ -1,18 +1,90 @@
-[
-  {
-    "Id": 1,
-    "name": "Reto Transformación Primavera 2024",
-    "startDate": "2024-03-01",
-    "currentDay": 5,
-    "completedDays": [1, 2, 3, 4],
-    "isActive": true
-  },
-  {
-    "Id": 2,
-    "name": "Reto Bienestar Integral",
-    "startDate": "2024-02-01",
-    "currentDay": 21,
-    "completedDays": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
-    "isActive": false
-  }
-]
+{
+  "challenges": [
+    {
+      "Id": 1,
+      "name": "Reto Transformación Primavera 2024",
+      "startDate": "2024-03-01",
+      "currentDay": 5,
+      "completedDays": [1, 2, 3, 4],
+      "isActive": true
+    },
+    {
+      "Id": 2,
+      "name": "Reto Bienestar Integral",
+      "startDate": "2024-02-01",
+      "currentDay": 21,
+      "completedDays": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
+      "isActive": false
+    }
+  ],
+  "miniChallenges": [
+    {
+      "Id": 1,
+      "name": "Semana Sin Azúcar Añadida",
+      "description": "Evita todos los azúcares añadidos durante una semana completa",
+      "type": "weekly",
+      "difficulty": "medium",
+      "points": 35,
+      "startDate": "2024-03-04",
+      "endDate": "2024-03-10",
+      "isActive": true,
+      "isCompleted": false,
+      "progress": {
+        "current": 3,
+        "total": 7,
+        "completedDays": [1, 2, 3]
+      }
+    },
+    {
+      "Id": 2,
+      "name": "Hidratación Perfecta",
+      "description": "Bebe 8 vasos de agua cada día durante una semana",
+      "type": "weekly",
+      "difficulty": "easy",
+      "points": 25,
+      "startDate": "2024-03-04",
+      "endDate": "2024-03-10",
+      "isActive": true,
+      "isCompleted": false,
+      "progress": {
+        "current": 5,
+        "total": 7,
+        "completedDays": [1, 2, 4, 5, 6]
+      }
+    },
+    {
+      "Id": 3,
+      "name": "Movimiento Diario",
+      "description": "Realiza al menos 30 minutos de ejercicio cada día",
+      "type": "weekly",
+      "difficulty": "hard",
+      "points": 50,
+      "startDate": "2024-03-04",
+      "endDate": "2024-03-10",
+      "isActive": true,
+      "isCompleted": false,
+      "progress": {
+        "current": 2,
+        "total": 7,
+        "completedDays": [1, 3]
+      }
+    },
+    {
+      "Id": 4,
+      "name": "Descanso Reparador",
+      "description": "Duerme 8 horas completas cada noche durante una semana",
+      "type": "weekly",
+      "difficulty": "medium",
+      "points": 40,
+      "startDate": "2024-03-11",
+      "endDate": "2024-03-17",
+      "isActive": false,
+      "isCompleted": false,
+      "progress": {
+        "current": 0,
+        "total": 7,
+        "completedDays": []
+      }
+    }
+  ]
+}

@@ -3,8 +3,8 @@ import { toast } from "react-toastify";
 import { challengeService } from "@/services/api/challengeService";
 import { habitService } from "@/services/api/habitService";
 import { dayProgressService } from "@/services/api/dayProgressService";
-import ApperIcon from "@/components/ApperIcon";
 import { usePoints } from "@/contexts/PointsContext";
+import ApperIcon from "@/components/ApperIcon";
 import Error from "@/components/ui/Error";
 import Loading from "@/components/ui/Loading";
 import StatsCard from "@/components/molecules/StatsCard";
@@ -15,9 +15,88 @@ const Dashboard = () => {
   const [challenge, setChallenge] = useState(null);
   const [dayProgress, setDayProgress] = useState(null);
   const [habits, setHabits] = useState([]);
+  const [miniChallenges, setMiniChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Utility functions for mini-challenges
+  const getDifficultyColor = (difficulty) => {
+    switch (difficulty?.toLowerCase()) {
+      case 'easy':
+        return 'bg-green-100 text-green-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'hard':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getDifficultyText = (difficulty) => {
+    switch (difficulty?.toLowerCase()) {
+      case 'easy':
+        return 'Fácil';
+      case 'medium':
+        return 'Medio';
+      case 'hard':
+        return 'Difícil';
+      default:
+        return 'Normal';
+    }
+  };
+
+  const handleMiniChallengeDay = async (miniChallengeId, day) => {
+    try {
+      const miniChallenge = miniChallenges.find(mc => mc.Id === miniChallengeId);
+      if (!miniChallenge || miniChallenge.progress.completedDays.includes(day)) {
+        return;
+      }
+
+      // Update mini-challenge progress
+      const updatedMiniChallenges = miniChallenges.map(mc => {
+        if (mc.Id === miniChallengeId) {
+          const newCompletedDays = [...mc.progress.completedDays, day];
+          const newCurrent = newCompletedDays.length;
+          const isCompleted = newCurrent >= mc.progress.total;
+
+          return {
+            ...mc,
+            progress: {
+              ...mc.progress,
+              current: newCurrent,
+              completedDays: newCompletedDays
+            },
+            isCompleted
+          };
+        }
+        return mc;
+      });
+
+      setMiniChallenges(updatedMiniChallenges);
+
+      // Award points
+      const points = awardPoints.habitCompletion(miniChallenge.name);
+      toast.success(`¡Mini-reto completado! +${points} puntos ⭐`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+
+      // Check if mini-challenge is now complete
+      const updatedChallenge = updatedMiniChallenges.find(mc => mc.Id === miniChallengeId);
+      if (updatedChallenge?.isCompleted) {
+        const bonusPoints = awardPoints.streakBonus(updatedChallenge.progress.total);
+        toast.success(`¡Mini-reto completado! +${bonusPoints} puntos bonus! 🎉`, {
+          position: "top-right",
+          autoClose: 4000,
+        });
+      }
+
+    } catch (error) {
+      console.error('Error updating mini-challenge:', error);
+      toast.error("Error al actualizar el mini-reto");
+    }
+  };
 const loadDashboardData = async () => {
     try {
       setLoading(true);
@@ -351,8 +430,142 @@ const completedHabitsToday = habits.filter(h => h.isCompletedToday).length;
               </span>
             </div>
           </div>
-        </div>
+</div>
       </div>
+
+      {/* Mini-Challenges Section */}
+      {miniChallenges.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold font-display text-gray-900">
+              Mini-Retos Semanales
+            </h2>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <ApperIcon name="Zap" size={16} />
+              <span>Retos temáticos independientes</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {miniChallenges.map((miniChallenge) => {
+              const progressPercentage = Math.round((miniChallenge.progress.current / miniChallenge.progress.total) * 100);
+              
+              return (
+                <div key={miniChallenge.Id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-semibold text-gray-900 text-lg">
+                          {miniChallenge.name}
+                        </h3>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(miniChallenge.difficulty)}`}>
+                          {getDifficultyText(miniChallenge.difficulty)}
+                        </span>
+                      </div>
+                      <p className="text-gray-600 text-sm mb-3">
+                        {miniChallenge.description}
+                      </p>
+                    </div>
+                    <div className="ml-3">
+                      <div className="flex items-center gap-1 text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+                        <ApperIcon name="Star" size={14} />
+                        <span className="text-xs font-medium">{miniChallenge.points}pts</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Progreso</span>
+                      <span className="font-medium text-gray-900">
+                        {miniChallenge.progress.current}/{miniChallenge.progress.total} días
+                      </span>
+                    </div>
+                    <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
+                        style={{ width: `${progressPercentage}%` }}
+                      />
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {progressPercentage}% completado
+                    </div>
+                  </div>
+
+                  {/* Days Progress */}
+                  <div className="mb-4">
+                    <div className="text-sm text-gray-600 mb-2">Días de la semana:</div>
+                    <div className="flex gap-1">
+                      {Array.from({ length: 7 }, (_, index) => {
+                        const day = index + 1;
+                        const isCompleted = miniChallenge.progress.completedDays.includes(day);
+                        const isToday = day === 4; // Mock current day
+                        
+                        return (
+                          <button
+                            key={day}
+                            onClick={() => !isCompleted && isToday && handleMiniChallengeDay(miniChallenge.Id, day)}
+                            disabled={isCompleted || !isToday}
+                            className={`
+                              w-8 h-8 rounded-full text-xs font-medium transition-all duration-200
+                              ${isCompleted 
+                                ? 'bg-green-500 text-white shadow-md' 
+                                : isToday
+                                  ? 'bg-blue-100 text-blue-600 border-2 border-blue-300 hover:bg-blue-200 cursor-pointer'
+                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              }
+                            `}
+                          >
+                            {day}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {miniChallenge.isCompleted ? (
+                        <>
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm text-green-600 font-medium">¡Completado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                          <span className="text-sm text-blue-600 font-medium">En progreso</span>
+                        </>
+                      )}
+                    </div>
+                    {miniChallenge.isCompleted && (
+                      <div className="flex items-center gap-1 text-yellow-600">
+                        <ApperIcon name="Trophy" size={16} />
+                        <span className="text-xs font-medium">+{miniChallenge.points}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="bg-blue-100 rounded-full p-2">
+                <ApperIcon name="Info" size={20} className="text-blue-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900">Sobre los Mini-Retos</h3>
+            </div>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Los mini-retos son desafíos semanales temáticos que complementan tu reto principal de 21 días. 
+              Cada uno tiene objetivos específicos, puntos de recompensa únicos y progreso independiente. 
+              ¡Completa tantos como puedas para maximizar tus puntos y acelerar tu transformación!
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

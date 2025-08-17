@@ -63,8 +63,59 @@ class ChallengeService {
     }
     
     this.challenges.splice(index, 1);
+this.challenges.splice(index, 1);
     return true;
   }
-}
 
-export const challengeService = new ChallengeService();
+  // Mini-challenge methods
+  async getAllMiniChallenges() {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return [...this.miniChallenges];
+  }
+
+  async getActiveMiniChallenges() {
+    await new Promise(resolve => setTimeout(resolve, 250));
+    return this.miniChallenges.filter(mc => mc.isActive && !mc.isCompleted);
+  }
+
+  async getMiniChallengeById(id) {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const miniChallenge = this.miniChallenges.find(mc => mc.Id === id);
+    if (!miniChallenge) {
+      throw new Error(`Mini-reto con ID ${id} no encontrado`);
+    }
+    return { ...miniChallenge };
+  }
+
+  async completeMiniChallenge(id, dayCompleted) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const index = this.miniChallenges.findIndex(mc => mc.Id === id);
+    if (index === -1) {
+      throw new Error(`Mini-reto con ID ${id} no encontrado`);
+    }
+
+    const miniChallenge = this.miniChallenges[index];
+    if (!miniChallenge.progress.completedDays.includes(dayCompleted)) {
+      miniChallenge.progress.completedDays.push(dayCompleted);
+      miniChallenge.progress.current = miniChallenge.progress.completedDays.length;
+      
+      // Check if completed
+      if (miniChallenge.progress.current >= miniChallenge.progress.total) {
+        miniChallenge.isCompleted = true;
+      }
+    }
+
+    return { ...miniChallenge };
+  }
+
+  async updateMiniChallenge(id, updateData) {
+    await new Promise(resolve => setTimeout(resolve, 350));
+    const index = this.miniChallenges.findIndex(mc => mc.Id === id);
+    if (index === -1) {
+      throw new Error(`Mini-reto con ID ${id} no encontrado`);
+    }
+    
+    this.miniChallenges[index] = { ...this.miniChallenges[index], ...updateData };
+    return { ...this.miniChallenges[index] };
+  }
+}

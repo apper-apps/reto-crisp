@@ -97,6 +97,31 @@ class PointsService {
     this.totalPoints += points;
     this.savePoints();
     this.addPointsHistory('challenge_progress', points, { day });
+return points;
+  }
+
+  awardMiniChallengeCompletion(challengeName, challengePoints = 25) {
+    const points = challengePoints;
+    this.totalPoints += points;
+    this.savePoints();
+    this.addPointsHistory('mini_challenge_complete', points, { 
+      challengeName,
+      challengePoints 
+    });
+    return points;
+  }
+
+  awardMiniChallengeProgress(challengeName, day, totalDays) {
+    const basePoints = 3;
+    const progressBonus = Math.floor((day / totalDays) * 5);
+    const points = basePoints + progressBonus;
+    this.totalPoints += points;
+    this.savePoints();
+    this.addPointsHistory('mini_challenge_progress', points, { 
+      challengeName, 
+      day, 
+      totalDays 
+    });
     return points;
   }
 }

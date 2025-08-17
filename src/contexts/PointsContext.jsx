@@ -97,6 +97,9 @@ const value = {
     totalPoints,
     celebrating,
     streakCelebration,
+    awardMiniChallenge: (challengeName, challengePoints) => {
+      return pointsService.awardMiniChallengeCompletion(challengeName, challengePoints);
+    },
     refreshPoints,
     awardPoints
   };
