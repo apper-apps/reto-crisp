@@ -41,24 +41,24 @@ const moments = [
 
 const sampleContent = {
   morning: [
-    { type: 'habit', title: 'Meditación matutina', completed: true },
-    { type: 'activity', title: 'Ejercicio cardiovascular', completed: false },
-    { type: 'note', title: 'Planificar el día', completed: true }
+    { type: 'habit', title: 'Desafío de Hidratación', completed: true },
+    { type: 'reflection', title: 'Reflexión: Mi compromiso personal con la hidratación', completed: false },
+    { type: 'activity', title: 'Preparar botella de agua para el día', completed: true }
   ],
   midday: [
-    { type: 'habit', title: 'Almuerzo saludable', completed: true },
-    { type: 'activity', title: 'Revisar metas del día', completed: false },
-    { type: 'reflection', title: 'Momento de gratitud', completed: false }
+    { type: 'activity', title: 'Post educativo: Beneficios del agua en el cuerpo', completed: true },
+    { type: 'habit', title: 'Beber segundo vaso de agua', completed: false },
+    { type: 'note', title: 'Recordatorio: Agua antes del almuerzo', completed: false }
   ],
   evening: [
-    { type: 'habit', title: 'Leer 30 minutos', completed: false },
-    { type: 'activity', title: 'Tiempo en familia', completed: true },
-    { type: 'note', title: 'Preparar la cena', completed: true }
+    { type: 'activity', title: 'Encuesta: ¿Cómo te sientes? (Nivel de energía 1-5)', completed: false },
+    { type: 'habit', title: 'Evaluar mi hidratación del día', completed: true },
+    { type: 'reflection', title: 'Observar cambios en mi bienestar', completed: true }
   ],
   night: [
-    { type: 'habit', title: 'Reflexión del día', completed: false },
-    { type: 'activity', title: 'Relajación y descanso', completed: false },
-    { type: 'note', title: 'Preparar ropa para mañana', completed: true }
+    { type: 'reflection', title: 'Gratitud: Logros del día en hidratación', completed: false },
+    { type: 'activity', title: 'Confirmar cumplimiento del reto diario', completed: false },
+    { type: 'note', title: 'Preparar agua para mañana', completed: true }
   ]
 };
 
